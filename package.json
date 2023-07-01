@@ -19,7 +19,13 @@
     "url": "https://github.com/TaylorAbraham/prettier-plugin-gml/issues"
   },
   "homepage": "https://github.com/TaylorAbraham/prettier-plugin-gml#readme",
-  "dependencies": {
-    "prettier": "2.0.5"
+  "directories": {
+    "lib": "lib"
+  },
+  "scripts": {
+    "test": "npx prettier --plugin=./ ./TEST.gml"
+  },
+  "devDependencies": {
+    "prettier": "^2.8.8"
   }
 }
