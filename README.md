@@ -146,3 +146,8 @@ Once changes are made, the plugin can be tested with:
 ```
 npx prettier --plugin .\prettier-plugin-gml\ .\TEST.gml
 ```
+
+Or, run the development plugin version on a whole directory:
+```
+npm run write --path=/Users/henrykirk/GameMakerStudio2/ColMesh
+```

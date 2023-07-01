@@ -6,7 +6,7 @@ with(enemy)
 {
 
 	  self.hp-=damage
-	if(self.hp<=0){instance_destroy(self)}
+	if self.hp<=0 {instance_destroy(self)}
 }
 
 #endregion
@@ -21,4 +21,11 @@ function func_add(n1, n2) {
 /// @desc Subtract 2 numbers
 function func_sub(n1, n2) {
     return n1 - n2;
+}
+
+if global.disableDraw{exit;}
+
+if true//this is an inline comment
+{
+show_debug_message("Test console message");
 }
