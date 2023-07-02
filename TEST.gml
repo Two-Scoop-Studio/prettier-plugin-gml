@@ -17,7 +17,7 @@ function func_add(n1, n2) {
     return n1 + n2;
 }
 
-/// @function func_sub
+/// @function func_sub()
 /// @desc Subtract 2 numbers
 function func_sub(n1, n2) {
     return n1 - n2;
@@ -28,4 +28,13 @@ if global.disableDraw{exit;}
 if true//this is an inline comment
 {
 show_debug_message("Test console message");
+}
+
+while true
+{
+    show_debug_message("Print statement within while loop");
+}
+
+repeat 2{
+        show_debug_message("Print statement within repeat loop");
 }

@@ -24,7 +24,7 @@
   },
   "scripts": {
     "test": "npx prettier --plugin=./ ./TEST.gml",
-    "write": "prettier --plugin=./ --write $npm_config_path"
+    "write": "prettier --plugin=./ --write $npm_config_path --ignore-path .prettierignore"
   },
   "devDependencies": {
     "prettier": "^2.8.8"

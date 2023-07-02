@@ -39,6 +39,8 @@
 
 This plugin enhances [Prettier](https://prettier.io/), a tool for automatically formatting your code in an opinionated way. This adds Game Maker Language (.gml file) support in the context of Game Maker Studio 2.
 
+This repo uses the GmlSpec.xml found in /Users/Shared/GameMakerStudio2/Cache/runtimes/runtime-2022.6.1.40/GmlSpec.xml
+
 ## Example
 
 ### Before
