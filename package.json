@@ -23,8 +23,8 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "npx prettier --plugin=./ ./TEST.gml",
-    "write": "prettier --plugin=./ --write $npm_config_path --ignore-path .prettierignore"
+    "test": "npx prettier --plugin=./ ./TEST.gml --no-error-on-unmatched-pattern --loglevel=warn",
+    "write": "prettier --plugin=./ --write $npm_config_path --ignore-path .prettierignore --no-error-on-unmatched-pattern --loglevel=warn"
   },
   "devDependencies": {
     "prettier": "^2.8.8"

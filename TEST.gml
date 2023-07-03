@@ -23,6 +23,7 @@ function func_sub(n1, n2) {
     return n1 - n2;
 }
 
+//This is an inline comment without a space after the slashes
 if global.disableDraw{exit;}
 
 if true//this is an inline comment
@@ -35,6 +36,6 @@ while true
     show_debug_message("Print statement within while loop");
 }
 
-repeat 2{
-        show_debug_message("Print statement within repeat loop");
+repeat 2 {
+    show_debug_message("Print statement within repeat loop");
 }
