@@ -1,8 +1,9 @@
-const antlr4 = require('antlr4');
-const GMLLexer = require('./GameMakerLanguageLexer.js');
-const GMLParser = require('./GameMakerLanguageParser.js');
-const GMLVisitor = require('./GameMakerLanguageParserVisitor.js');
+// plugin.js
 
+import antlr4 from 'antlr4';
+import GMLLexer from './GameMakerLanguageLexer.js';
+import GMLParser from './GameMakerLanguageParser.js';
+import GMLVisitor from './GameMakerLanguageParserVisitor.js';
 
 function walk(node, callback) {
     callback(node);
@@ -13,17 +14,17 @@ function walk(node, callback) {
     }
 }
 
-function locStart(node) {
+export function locStart(node) {
     return node.start;
 }
 
-function locEnd(node) {
+export function locEnd(node) {
     return node.stop;
 }
   
-function parse(text) {
+export function parse(text, options) {
     const lexer = new GMLLexer(new antlr4.InputStream(text));
-    const tokens = new CommonTokenStream(lexer);
+    const tokens = new antlr4.CommonTokenStream(lexer);
     const parser = new GMLParser(tokens);
 
     // Assuming GML.g4 has a 'program' rule as the root rule
@@ -33,5 +34,46 @@ function parse(text) {
     const visitor = new GMLVisitor();
     const ast = visitor.visit(tree);
 
+    console.log(ast);
+
     return ast;
+}
+
+export function preprocess(text, options) {
+    // Because we're using the JavaScript parser to parse our GML code, we need
+    // to make a few minor adjustmenets so that the parser can handle GML specifics
+    if (parser.preprocess) {
+      text = parser.preprocess(text, options);
+    }
+
+    // Define the GML keywords that require parentheses
+    const keywords = ['if', 'while', 'repeat'];
+
+    // Loop through each keyword and replace the corresponding GML statements
+    for (const keyword of keywords) {
+      // Move inline comments to a new line and add parentheses
+      const regex = new RegExp(`(${keyword})\\s*([^\\/\\{\\n]+)(\\/\\/[^\\n]*|)\\s*\\{`, 'g');
+      text = text.replace(regex, `$3\n$1 ($2) {`);
+    }
+
+    // Define the words to replace
+    const replacements = {
+      "@func": "@function",
+      "@desc": "@description",
+      // Add more replacements here as needed
+    };
+
+    // Loop through each replacement and apply it
+    for (let [oldWord, newWord] of Object.entries(replacements)) {
+      const regex = new RegExp(`(\/\\*\\*[^*]*\\*+([^/*][^*]*\\*+)*|\\s*\/\/\/)\\s*${oldWord}\\b`, "g");
+      text = text.replace(regex, `$1 ${newWord}`);
+    }
+
+    // Add space to inline comment
+    text = text.replace(/\/\/(?=[^\/\s])/g, '// ');
+
+    // Added step: Remove parentheses from @function annotation
+    text = text.replace(/(@function)\s*([a-zA-Z_$][0-9a-zA-Z_$]*)\(\)/g, '$1 $2');
+
+    return text;
 }

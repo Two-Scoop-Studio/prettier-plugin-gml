@@ -2,10 +2,11 @@
   "name": "prettier-plugin-gml",
   "version": "0.2.0",
   "description": "Adds GML language support to Prettier",
-  "main": "src/index.js",
+  "type": "module",
+  "main": "src/index.mjs",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/henrylkirk/prettier-plugin-gml.git"
+    "url": "git+https://github.com/Two-Scoop-Studio/prettier-plugin-gml.git"
   },
   "keywords": [
     "prettier",
@@ -16,12 +17,12 @@
     "game-maker-studio-2",
     "game-maker-language"
   ],
-  "author": "Henry Kirk",
+  "author": "Two Scoop Studio",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/henrylkirk/prettier-plugin-gml/issues"
+    "url": "https://github.com/Two-Scoop-Studio/prettier-plugin-gml/issues"
   },
-  "homepage": "https://github.com/henrylkirk/prettier-plugin-gml#readme",
+  "homepage": "https://github.com/Two-Scoop-Studio/prettier-plugin-gml#readme",
   "directories": {
     "lib": "lib"
   },
@@ -30,6 +31,9 @@
     "write": "prettier --plugin=./ --write $npm_config_path --ignore-path .prettierignore --no-error-on-unmatched-pattern --loglevel=warn"
   },
   "devDependencies": {
-    "prettier": "^2.8.8"
+    "prettier": "^3.0.0"
+  },
+  "dependencies": {
+    "antlr4": "^4.13.0"
   }
 }

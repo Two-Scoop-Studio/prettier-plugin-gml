@@ -1,6 +1,8 @@
-const prettier = require("prettier");
-const fs = require("fs");
-const tests = ["AllInOne"];
+// index.js
+
+import prettier from 'prettier';
+import fs from 'fs';
+const tests = ["test_simple"];
 
 for (let test of tests) {
   const referenceFile = `test/${test}.gml`;
