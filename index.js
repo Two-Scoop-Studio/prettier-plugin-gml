@@ -1,4 +1,6 @@
-import { parse, preprocess, locStart, locEnd } from './plugin.js';
+// index.js
+
+import { parse, preprocess, locStart, locEnd, print } from './src/plugin.js';
 
 export const languages = [
   {

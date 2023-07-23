@@ -1,18 +1,18 @@
 // plugin.js
 
-import antlr4 from 'antlr4';
+import { InputStream, CommonTokenStream } from 'antlr4';
 import GMLLexer from './GameMakerLanguageLexer.js';
 import GMLParser from './GameMakerLanguageParser.js';
 import GMLVisitor from './GameMakerLanguageParserVisitor.js';
 
-function walk(node, callback) {
-    callback(node);
-    for (const key in node) {
-        if (node[key] && typeof node[key] === 'object') {
-        walk(node[key], callback);
-        }
-    }
-}
+// function walk(node, callback) {
+//     callback(node);
+//     for (const key in node) {
+//         if (node[key] && typeof node[key] === 'object') {
+//         walk(node[key], callback);
+//         }
+//     }
+// }
 
 export function locStart(node) {
     return node.start;
@@ -23,8 +23,8 @@ export function locEnd(node) {
 }
   
 export function parse(text, options) {
-    const lexer = new GMLLexer(new antlr4.InputStream(text));
-    const tokens = new antlr4.CommonTokenStream(lexer);
+    const lexer = new GMLLexer(new InputStream(text));
+    const tokens = new CommonTokenStream(lexer);
     const parser = new GMLParser(tokens);
 
     // Assuming GML.g4 has a 'program' rule as the root rule
@@ -76,4 +76,23 @@ export function preprocess(text, options) {
     text = text.replace(/(@function)\s*([a-zA-Z_$][0-9a-zA-Z_$]*)\(\)/g, '$1 $2');
 
     return text;
+}
+
+export function print(path, options, print) {
+  const node = path.getValue();
+  
+  if (!node) return "";
+
+  switch (node.type) {
+    case "Program":
+      // For a 'Program' node, print all its body statements
+      return path.map(print, "body").join("\n");
+    case "Identifier":
+      // For an 'Identifier' node, return its name
+      return node.name;
+    // Add more cases for each type of node in your AST
+    default:
+      // If the node type is unrecognized, throw an error
+      throw new Error("Unknown type: " + JSON.stringify(node));
+  }
 }

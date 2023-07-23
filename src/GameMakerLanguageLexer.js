@@ -557,13 +557,14 @@ export default class GameMakerLanguageLexer extends antlr4.Lexer {
         super(input)
         this._interp = new antlr4.atn.LexerATNSimulator(this, atn, decisionsToDFA, new antlr4.atn.PredictionContextCache());
 
-            bool ignoreNewline = true;
-            int lastTokenType = -4;
-            int templateDepth = 0;
-            public override IToken NextToken() {
-                var next = base.NextToken();
-                if (next.Channel == Lexer.DefaultTokenChannel) {
-                    lastTokenType = next.Type;
+            var ignoreNewline = true;
+            var lastTokenType = -4;
+            var templateDepth = 0;
+
+            function nextToken() {
+                var next = antlr4.Lexer.prototype.nextToken.call(this);
+                if (next.channel === antlr4.Lexer.DEFAULT_TOKEN_CHANNEL) {
+                    this.lastTokenType = next.type;
                 }
                 return next;
             }

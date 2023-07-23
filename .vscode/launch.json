@@ -8,6 +8,7 @@
             "skipFiles": [
                 "<node_internals>/**"
             ],
+            "runtimeArgs": ["--trace-warnings"],
             "program": "${workspaceFolder}/test/index.js"
         }
     ]

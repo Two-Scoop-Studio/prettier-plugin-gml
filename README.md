@@ -153,3 +153,13 @@ Or, run the development plugin version on a whole directory:
 ```
 npm run write --path=/Users/henrykirk/GameMakerStudio2/ColMesh
 ```
+
+## Generate project structure tree
+```
+find . | grep -v "__pycache__\|\.pytest_cache\|\.benchmarks\|node_modules\|\.pyc\|./talk-venv\|./.github\|./.DS_Store\|package-lock.json\|./.git" > project_structure.txt
+```
+
+## Generate JavaScript code from grammar files (from within 'lib' directory)
+```
+antlr4 -Dlanguage=JavaScript -visitor -o ../src GameMakerLanguageLexer.g4 && antlr4 -Dlanguage=JavaScript -visitor -o ../src GameMakerLanguageParser.g4
+```

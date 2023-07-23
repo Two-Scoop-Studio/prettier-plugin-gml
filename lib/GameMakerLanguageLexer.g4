@@ -3,13 +3,14 @@ lexer grammar GameMakerLanguageLexer;
 channels { ERROR }
 
 @lexer::members {
-    bool ignoreNewline = true;
-    int lastTokenType = -4;
-    int templateDepth = 0;
-    public override IToken NextToken() {
-        var next = base.NextToken();
-        if (next.Channel == Lexer.DefaultTokenChannel) {
-            lastTokenType = next.Type;
+    var ignoreNewline = true;
+    var lastTokenType = -4;
+    var templateDepth = 0;
+
+    function nextToken() {
+        var next = antlr4.Lexer.prototype.nextToken.call(this);
+        if (next.channel === antlr4.Lexer.DEFAULT_TOKEN_CHANNEL) {
+            this.lastTokenType = next.type;
         }
         return next;
     }

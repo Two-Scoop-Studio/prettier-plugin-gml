@@ -3,7 +3,7 @@
   "version": "0.2.0",
   "description": "Adds GML language support to Prettier",
   "type": "module",
-  "main": "src/index.mjs",
+  "main": "./index.js",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Two-Scoop-Studio/prettier-plugin-gml.git"
@@ -28,9 +28,11 @@
   },
   "scripts": {
     "test": "npx prettier --plugin=./ ./TEST.gml --no-error-on-unmatched-pattern --loglevel=warn",
-    "write": "prettier --plugin=./ --write $npm_config_path --ignore-path .prettierignore --no-error-on-unmatched-pattern --loglevel=warn"
+    "write": "prettier --plugin=./ --write $npm_config_path --ignore-path .prettierignore --no-error-on-unmatched-pattern --loglevel=warn",
+    "lint": "eslint ."
   },
   "devDependencies": {
+    "eslint": "^8.45.0",
     "prettier": "^3.0.0"
   },
   "dependencies": {
