@@ -2,23 +2,26 @@
   "name": "prettier-plugin-gml",
   "version": "0.2.0",
   "description": "Adds GML language support to Prettier",
-  "main": "lib/index.js",
+  "main": "src/index.js",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/TaylorAbraham/prettier-plugin-gml.git"
+    "url": "git+https://github.com/henrylkirk/prettier-plugin-gml.git"
   },
   "keywords": [
     "prettier",
     "prettier-plugin",
     "gml",
-    "game-maker"
+    "game-maker",
+    "game-maker-studio",
+    "game-maker-studio-2",
+    "game-maker-language"
   ],
-  "author": "Taylor Abraham",
+  "author": "Henry Kirk",
   "license": "GPL-3.0",
   "bugs": {
-    "url": "https://github.com/TaylorAbraham/prettier-plugin-gml/issues"
+    "url": "https://github.com/henrylkirk/prettier-plugin-gml/issues"
   },
-  "homepage": "https://github.com/TaylorAbraham/prettier-plugin-gml#readme",
+  "homepage": "https://github.com/henrylkirk/prettier-plugin-gml#readme",
   "directories": {
     "lib": "lib"
   },

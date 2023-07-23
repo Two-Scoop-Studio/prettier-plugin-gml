@@ -1,5 +1,6 @@
 const { parsers } = require("prettier/parser-babel");
 const parser = parsers.babel;
+const gmlParser = require("gml-pegjs");
 
 const {
   doc: {
@@ -7,7 +8,7 @@ const {
   },
 } = require("prettier");
 
-const languages = [
+export const languages = [
   {
     extensions: [".gml"],
     name: "GML",
@@ -16,25 +17,15 @@ const languages = [
   },
 ];
 
-function walk(node, callback) {
-  callback(node);
-  for (const key in node) {
-    if (node[key] && typeof node[key] === 'object') {
-      walk(node[key], callback);
-    }
-  }
-}
-
-const gmlParsers = {
+export const parsers = {
   "gml-parse": {
     ...parser,
     parse(text, parsers, options) {
-      const ast = parser.parse(text, {
-        ...options,
-        comments: true,
-      });
+      const ast = gmlParser.parse(text);
+
       // The AST can be modified here for Game Maker-specific formatting
       // Alternatively, a pre-processing step can be added
+      console.log(ast);
       return ast;
     },
     preprocess(text, options) {
@@ -43,9 +34,6 @@ const gmlParsers = {
       if (parser.preprocess) {
         text = parser.preprocess(text, options);
       }
-      // Temporarily comment out region blocks until post-processing
-      text = text.replace(/(#region .*)/g, "//##$1");
-      text = text.replace(/(#endregion)/g, "//##$1");
 
       // Define the GML keywords that require parentheses
       const keywords = ['if', 'while', 'repeat'];
@@ -78,12 +66,17 @@ const gmlParsers = {
 
       return text;
     },
-    // For custom printing, change 'estree' to 'gml-tree' and add a printer
-    astFormat: "estree",
+    astFormat: "gml-ast",
   },
 };
 
-module.exports = {
-  languages,
-  parsers: gmlParsers,
+export const printers = {
+  "gml-ast": {
+    print,
+    // Optional methods...
+  },
+};
+
+export const options = {
+  // Custom options...
 };
