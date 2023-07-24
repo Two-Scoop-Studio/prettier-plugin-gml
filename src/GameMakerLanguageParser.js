@@ -9294,9 +9294,6 @@ class MacroTokenContext extends antlr4.ParserRuleContext {
 
 }
 
-
-
-
 GameMakerLanguageParser.ProgramContext = ProgramContext; 
 GameMakerLanguageParser.StatementListContext = StatementListContext; 
 GameMakerLanguageParser.StatementContext = StatementContext; 

@@ -1,3 +1,27 @@
+import { 
+    GMLSyntaxNode, 
+    EmptyNode, 
+    NodeList, 
+    Block, 
+    IfStatement, 
+    DoStatement, 
+    WhileStatement, 
+    ForStatement, 
+    RepeatStatement, 
+    WithStatement, 
+    SwitchStatement, 
+    SwitchCase, 
+    ContinueStatement, 
+    BreakStatement, 
+    ExitStatement, 
+    AssignmentExpression, 
+    CallExpression, 
+    MemberIndexExpression, 
+    MemberDotExpression, 
+    Literal, 
+    Identifier 
+} from './nodes.js';
+
 import GameMakerLanguageParserVisitor from './GameMakerLanguageParserVisitor.js';
 
 export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParserVisitor {
@@ -49,6 +73,12 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
     visitBlock(context) {
         let body = context.statementList() !== null ? this.visit(context.statementList()) : GMLSyntaxNode.Empty;
         return new Block(body);
+    }
+
+    visitRepeatStatement(context) {
+        let test = this.visit(context.expression());
+        let body = this.visit(context.statement());
+        return new RepeatStatement(test, body);
     }
     
     visitIfStatement(context) {

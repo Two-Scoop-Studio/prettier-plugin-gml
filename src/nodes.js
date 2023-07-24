@@ -1,4 +1,4 @@
-class GMLSyntaxNode {
+export class GMLSyntaxNode {
     constructor() {
         //this.StartIndex = 0;
         //this.EndIndex = 0;
@@ -21,27 +21,27 @@ class GMLSyntaxNode {
     }
 }
 
-class EmptyNode extends GMLSyntaxNode {
+export class EmptyNode extends GMLSyntaxNode {
     constructor() {
         super();
     }
 }
 
-class NodeList extends GMLSyntaxNode {
+export class NodeList extends GMLSyntaxNode {
     constructor(contents) {
         super();
         this.Contents = contents;
     }
 }
 
-class Block extends GMLSyntaxNode {
+export class Block extends GMLSyntaxNode {
     constructor(body) {
         super();
         this.Body = body;
     }
 }
 
-class IfStatement extends GMLSyntaxNode {
+export class IfStatement extends GMLSyntaxNode {
     constructor(test, consequent, alternate) {
         super();
         this.Test = test;
@@ -50,7 +50,7 @@ class IfStatement extends GMLSyntaxNode {
     }
 }
 
-class DoStatement extends GMLSyntaxNode {
+export class DoStatement extends GMLSyntaxNode {
     constructor(body, test) {
         super();
         this.Body = body;
@@ -58,7 +58,7 @@ class DoStatement extends GMLSyntaxNode {
     }
 }
 
-class WhileStatement extends GMLSyntaxNode {
+export class WhileStatement extends GMLSyntaxNode {
     constructor(test, body) {
         super();
         this.Test = test;
@@ -66,7 +66,7 @@ class WhileStatement extends GMLSyntaxNode {
     }
 }
 
-class ForStatement extends GMLSyntaxNode {
+export class ForStatement extends GMLSyntaxNode {
     constructor(init, test, update, body) {
         super();
         this.Init = init;
@@ -76,7 +76,7 @@ class ForStatement extends GMLSyntaxNode {
     }
 }
 
-class RepeatStatement extends GMLSyntaxNode {
+export class RepeatStatement extends GMLSyntaxNode {
     constructor(test, body) {
         super();
         this.Test = test;
@@ -84,7 +84,7 @@ class RepeatStatement extends GMLSyntaxNode {
     }
 }
 
-class WithStatement extends GMLSyntaxNode {
+export class WithStatement extends GMLSyntaxNode {
     constructor(object, body) {
         super();
         this.Object = object;
@@ -92,7 +92,7 @@ class WithStatement extends GMLSyntaxNode {
     }
 }
 
-class SwitchStatement extends GMLSyntaxNode {
+export class SwitchStatement extends GMLSyntaxNode {
     constructor(discriminant, cases) {
         super();
         this.Discriminant = discriminant;
@@ -100,7 +100,7 @@ class SwitchStatement extends GMLSyntaxNode {
     }
 }
 
-class SwitchCase extends GMLSyntaxNode {
+export class SwitchCase extends GMLSyntaxNode {
     constructor(test, body) {
         super();
         this.Test = test;
@@ -108,25 +108,25 @@ class SwitchCase extends GMLSyntaxNode {
     }
 }
 
-class ContinueStatement extends GMLSyntaxNode {
+export class ContinueStatement extends GMLSyntaxNode {
     constructor() {
         super();
     }
 }
 
-class BreakStatement extends GMLSyntaxNode {
+export class BreakStatement extends GMLSyntaxNode {
     constructor() {
         super();
     }
 }
 
-class ExitStatement extends GMLSyntaxNode {
+export class ExitStatement extends GMLSyntaxNode {
     constructor() {
         super();
     }
 }
 
-class AssignmentExpression extends GMLSyntaxNode {
+export class AssignmentExpression extends GMLSyntaxNode {
     constructor(operator, left, right) {
         super();
         this.Operator = operator;
@@ -135,15 +135,15 @@ class AssignmentExpression extends GMLSyntaxNode {
     }
 }
 
-class CallExpression extends GMLSyntaxNode {
-    constructor(object, arguments) {
+export class CallExpression extends GMLSyntaxNode {
+    constructor(object, args) {
         super();
         this.Object = object;
-        this.Arguments = arguments;
+        this.Arguments = args;
     }
 }
 
-class MemberIndexExpression extends GMLSyntaxNode {
+export class MemberIndexExpression extends GMLSyntaxNode {
     constructor(object, property, accessor) {
         super();
         this.Object = object;
@@ -152,7 +152,7 @@ class MemberIndexExpression extends GMLSyntaxNode {
     }
 }
 
-class MemberDotExpression extends GMLSyntaxNode {
+export class MemberDotExpression extends GMLSyntaxNode {
     constructor(object, property) {
         super();
         this.Object = object;
@@ -160,14 +160,14 @@ class MemberDotExpression extends GMLSyntaxNode {
     }
 }
 
-class Literal extends GMLSyntaxNode {
+export class Literal extends GMLSyntaxNode {
     constructor(text) {
         super();
         this.Text = text;
     }
 }
 
-class Identifier extends GMLSyntaxNode {
+export class Identifier extends GMLSyntaxNode {
     constructor(name) {
         super();
         this.Name = name;
