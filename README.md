@@ -163,3 +163,6 @@ find . | grep -v "__pycache__\|\.pytest_cache\|\.benchmarks\|node_modules\|\.pyc
 ```
 antlr4 -Dlanguage=JavaScript -visitor -o ../src GameMakerLanguageLexer.g4 && antlr4 -Dlanguage=JavaScript -visitor -o ../src GameMakerLanguageParser.g4
 ```
+
+## Useful VSCode extensions
+* ANTLR4 Grammar Syntax Support

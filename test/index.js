@@ -1,6 +1,6 @@
 // index.js
 
-import prettier from 'prettier';
+import * as prettier from "prettier";
 import fs from 'fs';
 const tests = ["test_simple"];
 

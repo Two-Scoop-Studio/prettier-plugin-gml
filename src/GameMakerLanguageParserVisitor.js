@@ -581,6 +581,4 @@ export default class GameMakerLanguageParserVisitor extends antlr4.tree.ParseTre
 	  return this.visitChildren(ctx);
 	}
 
-
-
 }

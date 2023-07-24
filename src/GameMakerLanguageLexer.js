@@ -783,7 +783,3 @@ GameMakerLanguageLexer.prototype.TemplateStringEndExpression_sempred = function(
 			throw "No predicate with index:" + predIndex;
 	}
 };
-
-
-
-

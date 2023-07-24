@@ -6,13 +6,13 @@ export const languages = [
   {
     extensions: [".gml"],
     name: "GML",
-    parsers: ["gml-parse"],
+    parsers: ["gml-parser"],
     vscodeLanguageIds: ["gml-gms2"],
   },
 ];
 
 export const parsers = {
-  "gml-parse": {
+  "gml-parser": {
     parse,
     astFormat: "gml-ast",
     locStart,
