@@ -171,7 +171,7 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
     }
     
     visitAssignmentExpression(context) {
-        let operator = context.assignmentOperator().GetText();
+        let operator = context.assignmentOperator().getText();
         if (operator == ":=") {
             operator = "=";
         }
@@ -190,7 +190,7 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
         if (context.templateStringLiteral() !== null) {
             return this.visit(context.templateStringLiteral());
         }
-        return new Literal(context.GetText());
+        return new Literal(context.getText());
     }
     
     visitLiteralExpression(context) {
@@ -273,13 +273,13 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
     
     visitMemberIndexLValue(context) {
         let property = this.visit(context.expressionSequence());
-        let accessor = context.accessor().GetText();
+        let accessor = context.accessor().getText();
         return new MemberIndexExpression(GMLSyntaxNode.Empty, property, accessor);
     }
     
     visitMemberIndexLValueFinal(context) {
         let property = this.visit(context.expressionSequence());
-        let accessor = context.accessor().GetText();
+        let accessor = context.accessor().getText();
         return new MemberIndexExpression(GMLSyntaxNode.Empty, property, accessor);
     }
     
@@ -305,7 +305,7 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
     }
     
     visitIdentifier(context) {
-        return new Identifier(context.GetText());
+        return new Identifier(context.getText());
     }
 
 }    
