@@ -100,7 +100,7 @@ export function print(path, options, print) {
   if (!node) {
     throw new Error("No node provided!");
   } else if (!node.type) {
-    throw new Error("Node has no type!");
+    throw new Error(`Node has no type value! Type of node is '${typeof node}'`);
   }
 
   // Debug line to print the node type
@@ -111,6 +111,12 @@ export function print(path, options, print) {
     case "Program":
       result = path.map(print, "body").join("\n");
       break;
+    case 'VariableDeclaration':
+      result = `${path.call(print, "Name")}${node.Initializer ? ` = ${path.call(print, "Initializer")}` : ''}`;
+      break;
+    case 'VariableDeclarationList':
+      result = `${node.modifier} ${path.map(print, "declarations").join(', ')};`;
+      break;
     case 'Block':
       result = `{ ${path.map(print, "Body").join('; ')} }`;
       break;
@@ -118,25 +124,31 @@ export function print(path, options, print) {
       result = `if (${path.call(print, "Test")}) ${path.call(print, "Consequent")}${node.Alternate ? ` else ${path.call(print, "Alternate")}` : ''}`;
       break;
     case 'DoStatement':
-      result = `do ${print(node.Body)} while (${print(node.Test)})`;
+      result = `do ${path.call(print, "Body")} while (${path.call(print, "Test")})`;
       break;
     case 'WhileStatement':
-      result = `while (${print(node.Test)}) ${print(node.Body)}`;
+      result = `while (${path.call(print, "Test")}) ${path.call(print, "Body")}`;
       break;
     case 'ForStatement':
-      result = `for (${print(node.Init)} ${print(node.Test)}; ${print(node.Update)}) ${print(node.Body)}`;
+      result = `for (${path.call(print, "Init")} ${path.call(print, "Test")}; ${path.call(print, "Update")}) ${path.call(print, "Body")}`;
       break;
     case 'RepeatStatement':
-      result = `repeat (${print(node.Test)}) ${print(node.Body)}`;
+      result = `repeat (${path.call(print, "Test")}) ${path.call(print, "Body")}`;
       break;
     case 'WithStatement':
-      result = `with (${print(node.Object)}) ${print(node.Body)}`;
+      result = `with (${path.call(print, "Object")}) ${path.call(print, "Body")}`;
       break;
     case 'SwitchStatement':
-      result = `switch (${print(node.Discriminant)}) { ${node.Cases.map(print).join(' ')} }`;
+      result = `switch (${path.call(print, "Discriminant")}) { ${path.map(print, "Cases").join(' ')} }`;
       break;
+    case 'FunctionDeclaration':
+        result = `function ${path.call(print, "Name")}(${path.map(print, "Params").join(', ')}) ${path.call(print, "Body")}`;
+        break;
+    case 'Statement':
+        result = `${path.call(print, "Expression")};`;
+        break;
     case 'SwitchCase':
-      result = `case ${print(node.Test)}: ${node.Body.map(print).join(' ')}`;
+      result = `case ${path.call(print, "Test")}: ${path.map(print, "Body").join(' ')}`;
       break;
     case 'ContinueStatement':
       result = `continue`;
@@ -148,25 +160,18 @@ export function print(path, options, print) {
       result = `exit`;
       break;
     case 'AssignmentExpression':
-      result = `${print(node.Left)} ${node.Operator} ${print(node.Right)}`;
+      result = `${path.call(print, "Left")} ${node.Operator} ${path.call(print, "Right")}`;
       break;
-    // case 'CallExpression':
-    //   // result = `${print(node.Object)}(${node.Arguments.map(print).join(', ')})`;
-    //   const objectParts = node.Object.map(print).join('.');
-    //   // const args = node.Arguments.Contents[0].map(print).join(', ');
-    //   const args = node.Arguments.Contents.map(subArr => subArr.map(print).join(' ')).join(', ');
-    //   result = `${objectParts}(${args})`;
-    //   break;
     case 'CallExpression':
-      const objectParts = node.Object.map(print).join('.');
-      const args = node.Arguments.Contents ? node.Arguments.Contents.flat().map(print).join(', ') : [];
+      const objectParts = path.map(print, "Object").join('.');
+      const args = node.Arguments && node.Arguments.Contents ? path.map(print, "Arguments.Contents").flat().join(', ') : '';
       result = `${objectParts}(${args})`;
       break;
     case 'MemberIndexExpression':
-      result = `${print(node.Object)}[${print(node.Property)}]`;
+      result = `${path.call(print, "Object")}[${path.call(print, "Property")}]`;
       break;
     case 'MemberDotExpression':
-      result = `${print(node.Object)}.${print(node.Property)}`;
+      result = `${path.call(print, "Object")}.${path.call(print, "Property")}`;
       break;
     case 'Literal':
       result = node.Text;
@@ -178,18 +183,24 @@ export function print(path, options, print) {
       result = '';
       break;
     case 'NodeList':
-      const flattenedContents = node.Contents.flat(Infinity); // Flatten array to any depth
-      const nonNullContents = flattenedContents.filter(x => x !== null); // Filter out null values
-      // result = nonNullContents.map(n => path.call(print, n)).join('\n');
-
-      console.log(`Printing NodeList of size ${nonNullContents.length}}`);
+      console.log(`Printing NodeList of size ${node.Contents.length}}`);
+      // Flatten the deeply nested Contents array
+      const flattenedContents = node.Contents.flat(Infinity);
+      const nonNullContents = flattenedContents.filter(x => x !== null && x !== undefined); // Filter out null values
       result = nonNullContents.map((n, index) => {
+        // Ensure n is a valid object and has a type property before calling print
+        // if (n && typeof n === 'object' && n.type) {
         console.log(`Node #${index}:`, n);
-        const printed = path.call(print, n);
+        const printed = print(path.constructor(n, path));
         console.log(`Printed Node #${index}:`, printed);
         return printed;
+        // }
+        // If n is not a valid node object, return an empty string
+        // return '';
       }).join('\n');
-      break;      
+      // result = join(", ", path.map(print, "Contents"));  // assumes that you want to print list contents with commas in between
+      // result = path.map(print, flattenedContents).join("\n");
+      break;
     default:
       throw new Error(`Unknown node type '${node.type}' for node: ${JSON.stringify(node)}`);
   }

@@ -127,6 +127,21 @@ export class ExitStatement extends GMLSyntaxNode {
     }
 }
 
+export class VariableDeclaration extends GMLSyntaxNode {
+    constructor(name, initializer) {
+        super();
+        this.Name = name;
+        this.Initializer = initializer;
+    }
+}
+
+export class VariableDeclarationList extends GMLSyntaxNode {
+    constructor(declarations) {
+        super();
+        this.Declarations = declarations;
+    }
+}
+
 export class AssignmentExpression extends GMLSyntaxNode {
     constructor(operator, left, right) {
         super();

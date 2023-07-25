@@ -17,9 +17,11 @@ import {
     AssignmentExpression, 
     CallExpression, 
     MemberIndexExpression, 
-    MemberDotExpression, 
+    MemberDotExpression,
     Literal, 
-    Identifier 
+    Identifier,
+    VariableDeclaration,
+    VariableDeclarationList
 } from './nodes.js';
 
 import GameMakerLanguageParserVisitor from './GameMakerLanguageParserVisitor.js';
@@ -69,6 +71,27 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
     
         return GMLSyntaxNode.Empty;
     }
+
+    visitVariableDeclarationList(context) {
+        let varModifier = context.varModifier() ? context.varModifier().getText() : null;
+        let variableDeclarations = context.variableDeclaration();
+        
+        let declarations = [];
+        for (let varDec of variableDeclarations) {
+            let identifier = this.visit(varDec.identifier());
+            let expr = varDec.expressionOrFunction() ? this.visit(varDec.expressionOrFunction()) : null;
+            declarations.push(new VariableDeclaration(identifier, expr));
+        }
+    
+        return new VariableDeclarationList(this.getVarModifier(varModifier), declarations);
+    }
+    
+    getVarModifier(modifierText) {
+        if(modifierText === null) return null;
+        if(modifierText.toLowerCase() === "var") return "var";
+        if(modifierText.toLowerCase() === "static") return "static";
+        return null;
+    }    
     
     visitBlock(context) {
         let body = context.statementList() !== null ? this.visit(context.statementList()) : GMLSyntaxNode.Empty;
