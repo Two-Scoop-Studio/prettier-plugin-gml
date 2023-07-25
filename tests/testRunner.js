@@ -3,14 +3,11 @@
 import * as prettier from "prettier";
 import fs from 'fs';
 import path from 'path';
-import url from 'url';
+import chalk from 'chalk';
 
 const testsDirectory = './tests/';
 const fileEncoding = 'utf8';
 const fileExt = '.gml';
-
-// Get the directory name of the current module
-const __dirname = path.dirname(url.fileURLToPath(import.meta.url));
 
 async function getFilesWithExtension(directory, extension) {
   const files = await fs.promises.readdir(directory);
@@ -27,25 +24,35 @@ async function testFiles() {
     const inputCode = await fs.promises.readFile(path.join(testsDirectory, inputFile), fileEncoding);
     const expectedOutput = await fs.promises.readFile(path.join(testsDirectory, outputFile), fileEncoding);
 
-    const formatted = prettier.format(inputCode, {
+    const formatted = await prettier.format(inputCode, {
         parser: "gml-parser",
         plugins: ["./index.js"]
     });
 
+  if (typeof formatted !== 'string') {
+      console.error(`Unexpected type for formatted code. Expected string but got ${typeof formatted}`);
+      process.exit(1);
+  }
+
     if (formatted !== expectedOutput) {
-      console.error(`Test failed for file ${inputFile}`);
+      const formattedLines = formatted.split('\n');
+      const expectedLines = expectedOutput.split('\n');
+
+      console.error(chalk.red(`\nTest failed for file ${inputFile}\n`));
+      for(let i = 0; i < Math.max(formattedLines.length, expectedLines.length); i++) {
+        if(formattedLines[i] !== expectedLines[i]) {
+          console.error(chalk.red(`Line ${i + 1} does not match:`));
+          console.error(chalk.red(`Expected: ${expectedLines[i]}`));
+          console.error(chalk.red(`Received: ${formattedLines[i]}`));
+        }
+      }
+
       process.exit(1); // Exit with a failure code
     }
   }
 
-  console.log('All tests passed!');
+  console.log(chalk.green('All tests passed!'));
   process.exit(0); // Exit with a success code
 }
 
 testFiles();
-
-
-
-
-
-

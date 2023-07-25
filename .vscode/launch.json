@@ -9,7 +9,7 @@
                 "<node_internals>/**"
             ],
             "runtimeArgs": ["--trace-warnings"],
-            "program": "${workspaceFolder}/test/index.js"
+            "program": "${workspaceFolder}/tests/testRunner.js"
         }
     ]
 }
