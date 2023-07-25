@@ -5,15 +5,6 @@ import GameMakerLanguageLexer from './GameMakerLanguageLexer.js';
 import GameMakerLanguageParser from './GameMakerLanguageParser.js';
 import GameMakerLanguageASTBuilder from './GameMakerLanguageASTBuilder.js';
 
-// function walk(node, callback) {
-//     callback(node);
-//     for (const key in node) {
-//         if (node[key] && typeof node[key] === 'object') {
-//         walk(node[key], callback);
-//         }
-//     }
-// }
-
 export function locStart(node) {
   return node.start;
 }
@@ -33,6 +24,7 @@ function printTokens(lexer) {
       console.log(`Token: ${token.toString()} (type: ${tokenTypeName})`);
     } catch (error) {
       console.error(`Error processing token: ${token.toString()}. Error: ${error.message}`);
+      throw error;
     }
   }
 }
@@ -58,11 +50,12 @@ export function parse(text, options) {
     const ast = builder.visit(tree);
 
     // Print out the AST for debugging
-    console.log('AST:', JSON.stringify(ast, null, 2));
+    console.log('Generated AST:', JSON.stringify(ast, null, 2));
 
     return ast;
   } catch (error) {
-    console.error('Error during parsing:', error);
+    console.error('Error during parsing:', error.stack);
+    throw error;
   }
 }
 
@@ -104,11 +97,14 @@ export function preprocess(text, options) {
 export function print(path, options, print) {
   const node = path.getValue();
 
-  console.log(node); // Debug line to print the node type
-
   if (!node) {
     throw new Error("No node provided!");
+  } else if (!node.type) {
+    throw new Error("Node has no type!");
   }
+
+  // Debug line to print the node type
+  console.log(`Attempting to print node of type ${node.type}: ${node}`);
 
   switch (node.type) {
     case "Program":
@@ -151,9 +147,9 @@ export function print(path, options, print) {
     case 'Identifier':
       return node.Name;
     case 'EmptyNode':
-        return '';
+      return '';
     case 'NodeList':
-        return node.Contents.map(print).join(', ');
+      return node.Contents.map(print).join(', ');
     default:
       throw new Error(`Unknown node type: ${node.type} for node ${JSON.stringify(node)}`);
   }

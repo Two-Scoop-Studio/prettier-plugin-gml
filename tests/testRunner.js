@@ -24,23 +24,36 @@ async function testFiles() {
     const inputCode = await fs.promises.readFile(path.join(testsDirectory, inputFile), fileEncoding);
     const expectedOutput = await fs.promises.readFile(path.join(testsDirectory, outputFile), fileEncoding);
 
+    if (typeof inputCode !== 'string') {
+      console.error(`Unexpected type for input code. Expected string but got ${typeof inputCode}`);
+      process.exit(1);
+    }
+
+    if (typeof expectedOutput !== 'string') {
+      console.error(`Unexpected type for expected output. Expected string but got ${typeof expectedOutput}`);
+      process.exit(1);
+    }
+
     const formatted = await prettier.format(inputCode, {
-        parser: "gml-parser",
-        plugins: ["./index.js"]
+      parser: "gml-parser",
+      plugins: ["./index.js"]
     });
 
-  if (typeof formatted !== 'string') {
+    if (typeof formatted !== 'string') {
       console.error(`Unexpected type for formatted code. Expected string but got ${typeof formatted}`);
       process.exit(1);
-  }
+    } else if (formatted.trim() === '') {
+      console.error(`Unexpected empty string for formatted code.`);
+      process.exit(1);
+    }
 
     if (formatted !== expectedOutput) {
       const formattedLines = formatted.split('\n');
       const expectedLines = expectedOutput.split('\n');
 
       console.error(chalk.red(`\nTest failed for file ${inputFile}\n`));
-      for(let i = 0; i < Math.max(formattedLines.length, expectedLines.length); i++) {
-        if(formattedLines[i] !== expectedLines[i]) {
+      for (let i = 0; i < Math.max(formattedLines.length, expectedLines.length); i++) {
+        if (formattedLines[i] !== expectedLines[i]) {
           console.error(chalk.red(`Line ${i + 1} does not match:`));
           console.error(chalk.red(`Expected: ${expectedLines[i]}`));
           console.error(chalk.red(`Received: ${formattedLines[i]}`));
