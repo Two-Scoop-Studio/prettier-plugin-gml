@@ -1,5 +1,6 @@
 export class GMLSyntaxNode {
     constructor() {
+        this.type = this.constructor.name;
         //this.StartIndex = 0;
         //this.EndIndex = 0;
     }

@@ -114,12 +114,47 @@ export function print(path, options, print) {
     case "Program":
       // For a 'Program' node, print all its body statements
       return path.map(print, "body").join("\n");
-    case "Identifier":
-      // For an 'Identifier' node, return its name
-      return node.name;
-    // Add more cases for each type of node in your AST
+    case 'Block':
+      return `{ ${node.Body.map(print).join('; ')} }`;
+    case 'IfStatement':
+      return `if (${print(node.Test)}) ${print(node.Consequent)} ${node.Alternate ? `else ${print(node.Alternate)}` : ''}`;
+    case 'DoStatement':
+      return `do ${print(node.Body)} while (${print(node.Test)})`;
+    case 'WhileStatement':
+      return `while (${print(node.Test)}) ${print(node.Body)}`;
+    case 'ForStatement':
+      return `for (${print(node.Init)} ${print(node.Test)}; ${print(node.Update)}) ${print(node.Body)}`;
+    case 'RepeatStatement':
+      return `repeat (${print(node.Test)}) ${print(node.Body)}`;
+    case 'WithStatement':
+      return `with (${print(node.Object)}) ${print(node.Body)}`;
+    case 'SwitchStatement':
+      return `switch (${print(node.Discriminant)}) { ${node.Cases.map(print).join(' ')} }`;
+    case 'SwitchCase':
+      return `case ${print(node.Test)}: ${node.Body.map(print).join(' ')}`;
+    case 'ContinueStatement':
+      return `continue`;
+    case 'BreakStatement':
+      return `break`;
+    case 'ExitStatement':
+      return `exit`;
+    case 'AssignmentExpression':
+      return `${print(node.Left)} ${node.Operator} ${print(node.Right)}`;
+    case 'CallExpression':
+      return `${print(node.Object)}(${node.Arguments.map(print).join(', ')})`;
+    case 'MemberIndexExpression':
+      return `${print(node.Object)}[${print(node.Property)}]`;
+    case 'MemberDotExpression':
+      return `${print(node.Object)}.${print(node.Property)}`;
+    case 'Literal':
+      return node.Text;
+    case 'Identifier':
+      return node.Name;
+    case 'EmptyNode':
+        return '';
+    case 'NodeList':
+        return node.Contents.map(print).join(', ');
     default:
-      console.log(JSON.stringify(node));
-      throw new Error(`Unknown node type: ${node.type}`);
+      throw new Error(`Unknown node type: ${node.type} for node ${JSON.stringify(node)}`);
   }
 }

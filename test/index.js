@@ -18,7 +18,7 @@ async function formatFiles() {
       plugins: ["./index.js"]
     });
 
-    console.log('Type of formattedCode:', typeof formattedCode); // debug line
+    console.log('Formatted code:', typeof formattedCode); // debug line
 
     await fs.promises.writeFile(formattedFile, formattedCode, "utf8");
   }
