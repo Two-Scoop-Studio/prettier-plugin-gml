@@ -104,53 +104,97 @@ export function print(path, options, print) {
   }
 
   // Debug line to print the node type
-  console.log(`Attempting to print node of type ${node.type}: ${node}`);
+  console.log(`Attempting to print node of type '${node.type}': ${JSON.stringify(node)}`);
 
+  let result = '';
   switch (node.type) {
     case "Program":
-      // For a 'Program' node, print all its body statements
-      return path.map(print, "body").join("\n");
+      result = path.map(print, "body").join("\n");
+      break;
     case 'Block':
-      return `{ ${node.Body.map(print).join('; ')} }`;
+      result = `{ ${path.map(print, "Body").join('; ')} }`;
+      break;
     case 'IfStatement':
-      return `if (${print(node.Test)}) ${print(node.Consequent)} ${node.Alternate ? `else ${print(node.Alternate)}` : ''}`;
+      result = `if (${path.call(print, "Test")}) ${path.call(print, "Consequent")}${node.Alternate ? ` else ${path.call(print, "Alternate")}` : ''}`;
+      break;
     case 'DoStatement':
-      return `do ${print(node.Body)} while (${print(node.Test)})`;
+      result = `do ${print(node.Body)} while (${print(node.Test)})`;
+      break;
     case 'WhileStatement':
-      return `while (${print(node.Test)}) ${print(node.Body)}`;
+      result = `while (${print(node.Test)}) ${print(node.Body)}`;
+      break;
     case 'ForStatement':
-      return `for (${print(node.Init)} ${print(node.Test)}; ${print(node.Update)}) ${print(node.Body)}`;
+      result = `for (${print(node.Init)} ${print(node.Test)}; ${print(node.Update)}) ${print(node.Body)}`;
+      break;
     case 'RepeatStatement':
-      return `repeat (${print(node.Test)}) ${print(node.Body)}`;
+      result = `repeat (${print(node.Test)}) ${print(node.Body)}`;
+      break;
     case 'WithStatement':
-      return `with (${print(node.Object)}) ${print(node.Body)}`;
+      result = `with (${print(node.Object)}) ${print(node.Body)}`;
+      break;
     case 'SwitchStatement':
-      return `switch (${print(node.Discriminant)}) { ${node.Cases.map(print).join(' ')} }`;
+      result = `switch (${print(node.Discriminant)}) { ${node.Cases.map(print).join(' ')} }`;
+      break;
     case 'SwitchCase':
-      return `case ${print(node.Test)}: ${node.Body.map(print).join(' ')}`;
+      result = `case ${print(node.Test)}: ${node.Body.map(print).join(' ')}`;
+      break;
     case 'ContinueStatement':
-      return `continue`;
+      result = `continue`;
+      break;
     case 'BreakStatement':
-      return `break`;
+      result = `break`;
+      break;
     case 'ExitStatement':
-      return `exit`;
+      result = `exit`;
+      break;
     case 'AssignmentExpression':
-      return `${print(node.Left)} ${node.Operator} ${print(node.Right)}`;
+      result = `${print(node.Left)} ${node.Operator} ${print(node.Right)}`;
+      break;
+    // case 'CallExpression':
+    //   // result = `${print(node.Object)}(${node.Arguments.map(print).join(', ')})`;
+    //   const objectParts = node.Object.map(print).join('.');
+    //   // const args = node.Arguments.Contents[0].map(print).join(', ');
+    //   const args = node.Arguments.Contents.map(subArr => subArr.map(print).join(' ')).join(', ');
+    //   result = `${objectParts}(${args})`;
+    //   break;
     case 'CallExpression':
-      return `${print(node.Object)}(${node.Arguments.map(print).join(', ')})`;
+      const objectParts = node.Object.map(print).join('.');
+      const args = node.Arguments.Contents ? node.Arguments.Contents.flat().map(print).join(', ') : [];
+      result = `${objectParts}(${args})`;
+      break;
     case 'MemberIndexExpression':
-      return `${print(node.Object)}[${print(node.Property)}]`;
+      result = `${print(node.Object)}[${print(node.Property)}]`;
+      break;
     case 'MemberDotExpression':
-      return `${print(node.Object)}.${print(node.Property)}`;
+      result = `${print(node.Object)}.${print(node.Property)}`;
+      break;
     case 'Literal':
-      return node.Text;
+      result = node.Text;
+      break;
     case 'Identifier':
-      return node.Name;
+      result = node.Name;
+      break;
     case 'EmptyNode':
-      return '';
+      result = '';
+      break;
     case 'NodeList':
-      return node.Contents.map(print).join(', ');
+      const flattenedContents = node.Contents.flat(Infinity); // Flatten array to any depth
+      const nonNullContents = flattenedContents.filter(x => x !== null); // Filter out null values
+      // result = nonNullContents.map(n => path.call(print, n)).join('\n');
+
+      console.log(`Printing NodeList of size ${nonNullContents.length}}`);
+      result = nonNullContents.map((n, index) => {
+        console.log(`Node #${index}:`, n);
+        const printed = path.call(print, n);
+        console.log(`Printed Node #${index}:`, printed);
+        return printed;
+      }).join('\n');
+      break;      
     default:
-      throw new Error(`Unknown node type: ${node.type} for node ${JSON.stringify(node)}`);
+      throw new Error(`Unknown node type '${node.type}' for node: ${JSON.stringify(node)}`);
   }
+
+  // Log the result before returning
+  console.log(`Print result for node of type ${node.type}: ${result}`);
+  return result;
 }
