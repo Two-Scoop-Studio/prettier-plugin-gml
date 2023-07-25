@@ -27,7 +27,7 @@
     "lib": "lib"
   },
   "scripts": {
-    "test": "npx prettier --plugin=./ ./TEST.gml --no-error-on-unmatched-pattern --loglevel=warn",
+    "test": "node ./tests/testRunner.js",
     "write": "prettier --plugin=./ --write $npm_config_path --ignore-path .prettierignore --no-error-on-unmatched-pattern --loglevel=warn",
     "lint": "eslint ."
   },
