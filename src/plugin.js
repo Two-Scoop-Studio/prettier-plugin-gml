@@ -112,15 +112,27 @@ export function print(path, options, print) {
       result = path.map(print, "body").join("\n");
       break;
     case 'VariableDeclaration':
+      if (!node.hasOwnProperty('Initializer')) {
+        throw new Error(`Node of type 'VariableDeclaration' is missing 'Initializer' property: ${JSON.stringify(node)}`);
+      }
       result = `${path.call(print, "Name")}${node.Initializer ? ` = ${path.call(print, "Initializer")}` : ''}`;
       break;
+    // case 'VariableDeclarationList':
+    //   if (!node.hasOwnProperty('modifier') || !Array.isArray(node.declarations)) {
+    //     throw new Error(`Node of type 'VariableDeclarationList' is missing 'modifier' or 'declarations' property: ${JSON.stringify(node)}`);
+    //   }
+    //   result = `${node.modifier} ${node.declarations.map(dec => path.call(print, dec)).join(', ')};`;
+    //   break;
     case 'VariableDeclarationList':
-      result = `${node.modifier} ${path.map(print, "declarations").join(', ')};`;
+      result = `${node.Declarations};`;
       break;
     case 'Block':
       result = `{ ${path.map(print, "Body").join('; ')} }`;
       break;
     case 'IfStatement':
+      if (!node.hasOwnProperty('Alternate')) {
+        throw new Error(`Node of type 'IfStatement' is missing 'Alternate' property: ${JSON.stringify(node)}`);
+      }
       result = `if (${path.call(print, "Test")}) ${path.call(print, "Consequent")}${node.Alternate ? ` else ${path.call(print, "Alternate")}` : ''}`;
       break;
     case 'DoStatement':
@@ -165,8 +177,11 @@ export function print(path, options, print) {
     case 'CallExpression':
       const objectParts = path.map(print, "Object").join('.');
       const args = node.Arguments && node.Arguments.Contents ? path.map(print, "Arguments.Contents").flat().join(', ') : '';
+      if (!node.Arguments || !node.Arguments.Contents) {
+        throw new Error(`Node of type 'CallExpression' is missing 'Arguments' or 'Contents' property: ${JSON.stringify(node)}`);
+      }
       result = `${objectParts}(${args})`;
-      break;
+      break;      
     case 'MemberIndexExpression':
       result = `${path.call(print, "Object")}[${path.call(print, "Property")}]`;
       break;
@@ -188,18 +203,11 @@ export function print(path, options, print) {
       const flattenedContents = node.Contents.flat(Infinity);
       const nonNullContents = flattenedContents.filter(x => x !== null && x !== undefined); // Filter out null values
       result = nonNullContents.map((n, index) => {
-        // Ensure n is a valid object and has a type property before calling print
-        // if (n && typeof n === 'object' && n.type) {
         console.log(`Node #${index}:`, n);
-        const printed = print(path.constructor(n, path));
+        const printed = this.print(new path.constructor(n, path), options, print);
         console.log(`Printed Node #${index}:`, printed);
         return printed;
-        // }
-        // If n is not a valid node object, return an empty string
-        // return '';
       }).join('\n');
-      // result = join(", ", path.map(print, "Contents"));  // assumes that you want to print list contents with commas in between
-      // result = path.map(print, flattenedContents).join("\n");
       break;
     default:
       throw new Error(`Unknown node type '${node.type}' for node: ${JSON.stringify(node)}`);
