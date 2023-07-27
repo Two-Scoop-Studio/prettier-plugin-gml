@@ -112,20 +112,20 @@ export function print(path, options, print) {
       result = path.map(print, "body").join("\n");
       break;
     case 'VariableDeclaration':
-      if (!node.hasOwnProperty('Initializer')) {
-        throw new Error(`Node of type 'VariableDeclaration' is missing 'Initializer' property: ${JSON.stringify(node)}`);
+      result = `${path.call(print, "Name")}`;
+      if (node.Initializer) {
+        result += ` = ${path.call(print, "Initializer")}`;
       }
-      result = `${path.call(print, "Name")}${node.Initializer ? ` = ${path.call(print, "Initializer")}` : ''}`;
       break;
-    // case 'VariableDeclarationList':
-    //   if (!node.hasOwnProperty('modifier') || !Array.isArray(node.declarations)) {
-    //     throw new Error(`Node of type 'VariableDeclarationList' is missing 'modifier' or 'declarations' property: ${JSON.stringify(node)}`);
-    //   }
-    //   result = `${node.modifier} ${node.declarations.map(dec => path.call(print, dec)).join(', ')};`;
-    //   break;
     case 'VariableDeclarationList':
-      result = `${node.Declarations};`;
-      break;
+      console.log('Printing VariableDeclarationList:');
+      result = `${node.Modifier} ${node.Declarations.map((dec, i) => {
+        console.log(`Printing declaration #${i}:`, dec);
+        const printed = path.call(print, dec);
+        console.log(`Printed declaration #${i}:`, printed);
+        return printed;
+      }).join(', ')};`;
+      break;    
     case 'Block':
       result = `{ ${path.map(print, "Body").join('; ')} }`;
       break;

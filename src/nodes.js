@@ -128,16 +128,18 @@ export class ExitStatement extends GMLSyntaxNode {
 }
 
 export class VariableDeclaration extends GMLSyntaxNode {
-    constructor(name, initializer) {
+    constructor(modifier, name, initializer) {
         super();
+        this.Modifier = modifier;
         this.Name = name;
         this.Initializer = initializer;
     }
 }
 
 export class VariableDeclarationList extends GMLSyntaxNode {
-    constructor(declarations) {
+    constructor(modifier, declarations) {
         super();
+        this.Modifier = modifier;
         this.Declarations = declarations;
     }
 }
