@@ -62,6 +62,7 @@ async function testFiles() {
 
       process.exit(1); // Exit with a failure code
     }
+    console.log(chalk.green('Test passed!'));
   }
 
   console.log(chalk.green('All tests passed!'));

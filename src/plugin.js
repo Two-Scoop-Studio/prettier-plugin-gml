@@ -4,6 +4,7 @@ import { InputStream, CommonTokenStream, Token } from 'antlr4';
 import GameMakerLanguageLexer from './GameMakerLanguageLexer.js';
 import GameMakerLanguageParser from './GameMakerLanguageParser.js';
 import GameMakerLanguageASTBuilder from './GameMakerLanguageASTBuilder.js';
+import { Identifier, Literal, VariableDeclaration } from './nodes.js';
 
 export function locStart(node) {
   return node.start;
@@ -59,7 +60,6 @@ export function parse(text, options) {
   }
 }
 
-
 export function preprocess(text, options) {
 
   // Define the GML keywords that require parentheses
@@ -95,12 +95,17 @@ export function preprocess(text, options) {
 }
 
 export function print(path, options, print) {
+
   const node = path.getValue();
+
+  if (Array.isArray(node)) {
+    return node.map((n, i) => path.call(print, i)).join("\n");
+  }
 
   if (!node) {
     throw new Error("No node provided!");
   } else if (!node.type) {
-    throw new Error(`Node has no type value! Type of node is '${typeof node}'`);
+    throw new Error(`Node has no type value! Type of node is '${typeof node}', value is '${JSON.stringify(node)}'`);
   }
 
   // Debug line to print the node type
@@ -112,55 +117,70 @@ export function print(path, options, print) {
       result = path.map(print, "body").join("\n");
       break;
     case 'VariableDeclaration':
-      result = `${path.call(print, "Name")}`;
-      if (node.Initializer) {
-        result += ` = ${path.call(print, "Initializer")}`;
+      console.log(`Printing VariableDeclaration node:`, node);
+      console.log(`Printing path object:`, path);
+      if (!node.name) {
+        console.error('VariableDeclaration node has no Name property');
       }
-      break;
+      if (!node.initializer) {
+        console.error('VariableDeclaration node has no Initializer property');
+      }
+      let name = path.call(print, "name");
+      let initializer = '';
+      if (node.initializer) {
+        console.log(`Initializer exists for VariableDeclaration node:`, node.initializer);
+        initializer = ` = ${path.call(print, "initializer")}`;
+      } else {
+        console.log(`No Initializer exists for VariableDeclaration node:`, node);
+      }
+      result = `${name}${initializer}`;
+      console.log(`Print result for node of type VariableDeclaration: ${result}`);
+      break;      
     case 'VariableDeclarationList':
-      console.log('Printing VariableDeclarationList:');
-      result = `${node.Modifier} ${node.Declarations.map((dec, i) => {
-        console.log(`Printing declaration #${i}:`, dec);
-        const printed = path.call(print, dec);
-        console.log(`Printed declaration #${i}:`, printed);
-        return printed;
-      }).join(', ')};`;
-      break;    
+      const declarationsPrinted = node.declarations.map((_, i) =>
+        path.call((childPath) => {
+          const printed = print(childPath);
+          return printed;
+        }, "declarations", i)
+      );
+      result = `${node.modifier} ${declarationsPrinted.join(', ')};`;
+      console.log(`Print result for node of type VariableDeclarationList: ${result}`);
+      break;       
     case 'Block':
-      result = `{ ${path.map(print, "Body").join('; ')} }`;
+      result = `{ ${path.map(print, "body").join('; ')} }`;
       break;
     case 'IfStatement':
-      if (!node.hasOwnProperty('Alternate')) {
-        throw new Error(`Node of type 'IfStatement' is missing 'Alternate' property: ${JSON.stringify(node)}`);
+      if (!node.hasOwnProperty('alternate')) {
+        throw new Error(`Node of type 'IfStatement' is missing 'alternate' property: ${JSON.stringify(node)}`);
       }
-      result = `if (${path.call(print, "Test")}) ${path.call(print, "Consequent")}${node.Alternate ? ` else ${path.call(print, "Alternate")}` : ''}`;
+      result = `if (${path.call(print, "test")}) ${path.call(print, "consequent")}${node.alternate ? ` else ${path.call(print, "alternate")}` : ''}`;
       break;
     case 'DoStatement':
-      result = `do ${path.call(print, "Body")} while (${path.call(print, "Test")})`;
+      result = `do ${path.call(print, "body")} while (${path.call(print, "test")})`;
       break;
     case 'WhileStatement':
-      result = `while (${path.call(print, "Test")}) ${path.call(print, "Body")}`;
+      result = `while (${path.call(print, "test")}) ${path.call(print, "body")}`;
       break;
     case 'ForStatement':
-      result = `for (${path.call(print, "Init")} ${path.call(print, "Test")}; ${path.call(print, "Update")}) ${path.call(print, "Body")}`;
+      result = `for (${path.call(print, "init")} ${path.call(print, "test")}; ${path.call(print, "update")}) ${path.call(print, "body")}`;
       break;
     case 'RepeatStatement':
-      result = `repeat (${path.call(print, "Test")}) ${path.call(print, "Body")}`;
+      result = `repeat (${path.call(print, "test")}) ${path.call(print, "body")}`;
       break;
     case 'WithStatement':
-      result = `with (${path.call(print, "Object")}) ${path.call(print, "Body")}`;
+      result = `with (${path.call(print, "object")}) ${path.call(print, "body")}`;
       break;
     case 'SwitchStatement':
-      result = `switch (${path.call(print, "Discriminant")}) { ${path.map(print, "Cases").join(' ')} }`;
+      result = `switch (${path.call(print, "discriminant")}) { ${path.map(print, "cases").join(' ')} }`;
       break;
     case 'FunctionDeclaration':
-        result = `function ${path.call(print, "Name")}(${path.map(print, "Params").join(', ')}) ${path.call(print, "Body")}`;
+        result = `function ${path.call(print, "name")}(${path.map(print, "params").join(', ')}) ${path.call(print, "body")}`;
         break;
     case 'Statement':
-        result = `${path.call(print, "Expression")};`;
+        result = `${path.call(print, "expression")};`;
         break;
     case 'SwitchCase':
-      result = `case ${path.call(print, "Test")}: ${path.map(print, "Body").join(' ')}`;
+      result = `case ${path.call(print, "test")}: ${path.map(print, "body").join(' ')}`;
       break;
     case 'ContinueStatement':
       result = `continue`;
@@ -172,40 +192,38 @@ export function print(path, options, print) {
       result = `exit`;
       break;
     case 'AssignmentExpression':
-      result = `${path.call(print, "Left")} ${node.Operator} ${path.call(print, "Right")}`;
+      result = `${path.call(print, "Left")} ${node.operator} ${path.call(print, "Right")}`;
       break;
     case 'CallExpression':
-      const objectParts = path.map(print, "Object").join('.');
-      const args = node.Arguments && node.Arguments.Contents ? path.map(print, "Arguments.Contents").flat().join(', ') : '';
-      if (!node.Arguments || !node.Arguments.Contents) {
-        throw new Error(`Node of type 'CallExpression' is missing 'Arguments' or 'Contents' property: ${JSON.stringify(node)}`);
+      const objectParts = path.map(print, "object").join('.');
+      const args = node.args && node.args.contents ? path.map(print, "args.contents").flat().join(', ') : '';
+      if (!node.args || !node.args.contents) {
+        throw new Error(`Node of type 'CallExpression' is missing 'args' or 'contents' property: ${JSON.stringify(node)}`);
       }
       result = `${objectParts}(${args})`;
       break;      
     case 'MemberIndexExpression':
-      result = `${path.call(print, "Object")}[${path.call(print, "Property")}]`;
+      result = `${path.call(print, "object")}[${path.call(print, "property")}]`;
       break;
     case 'MemberDotExpression':
-      result = `${path.call(print, "Object")}.${path.call(print, "Property")}`;
+      result = `${path.call(print, "object")}.${path.call(print, "property")}`;
       break;
     case 'Literal':
-      result = node.Text;
+      result = node.text;
       break;
     case 'Identifier':
-      result = node.Name;
+      result = node.name;
       break;
     case 'EmptyNode':
       result = '';
       break;
     case 'NodeList':
-      console.log(`Printing NodeList of size ${node.Contents.length}}`);
-      // Flatten the deeply nested Contents array
-      const flattenedContents = node.Contents.flat(Infinity);
+      console.log(`Printing NodeList of size ${node.contents.length}}`);
+      // Flatten the deeply nested contents array
+      const flattenedContents = node.contents.flat(Infinity);
       const nonNullContents = flattenedContents.filter(x => x !== null && x !== undefined); // Filter out null values
       result = nonNullContents.map((n, index) => {
-        console.log(`Node #${index}:`, n);
-        const printed = this.print(new path.constructor(n, path), options, print);
-        console.log(`Printed Node #${index}:`, printed);
+        const printed = path.call(print, "contents", index);
         return printed;
       }).join('\n');
       break;

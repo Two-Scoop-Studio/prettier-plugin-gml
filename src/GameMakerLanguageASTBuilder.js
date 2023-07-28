@@ -72,15 +72,23 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
         return GMLSyntaxNode.Empty;
     }
 
+    visitVariableDeclaration(ctx) {
+        let name = this.visit(ctx.identifier());
+        let initializer = ctx.expressionOrFunction() ? this.visit(ctx.expressionOrFunction()) : null;
+        return new VariableDeclaration(name, initializer);
+    }    
+
     visitVariableDeclarationList(context) {
         let varModifier = context.varModifier() ? context.varModifier().getText() : null;
         let variableDeclarations = context.variableDeclaration();
+        
         let declarations = [];
         for (let varDec of variableDeclarations) {
-            let identifier = this.visit(varDec.identifier());
+            let name = this.visit(varDec.identifier());
             let initializer = varDec.expressionOrFunction() ? this.visit(varDec.expressionOrFunction()) : null;
-            declarations.push(new VariableDeclaration(identifier, initializer));
+            declarations.push(new VariableDeclaration(name, initializer));
         }
+    
         return new VariableDeclarationList(this.getVarModifier(varModifier), declarations);
     }    
     

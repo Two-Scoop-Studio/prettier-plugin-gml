@@ -5,10 +5,6 @@ export class GMLSyntaxNode {
         //this.EndIndex = 0;
     }
 
-    get Type() {
-        return this.constructor.name;
-    }
-
     static get Empty() {
         return new EmptyNode();
     }
@@ -31,81 +27,81 @@ export class EmptyNode extends GMLSyntaxNode {
 export class NodeList extends GMLSyntaxNode {
     constructor(contents) {
         super();
-        this.Contents = contents;
+        this.contents = contents;
     }
 }
 
 export class Block extends GMLSyntaxNode {
     constructor(body) {
         super();
-        this.Body = body;
+        this.body = body;
     }
 }
 
 export class IfStatement extends GMLSyntaxNode {
     constructor(test, consequent, alternate) {
         super();
-        this.Test = test;
-        this.Consequent = consequent;
-        this.Alternate = alternate;
+        this.test = test;
+        this.consequent = consequent;
+        this.alternate = alternate;
     }
 }
 
 export class DoStatement extends GMLSyntaxNode {
     constructor(body, test) {
         super();
-        this.Body = body;
-        this.Test = test;
+        this.body = body;
+        this.test = test;
     }
 }
 
 export class WhileStatement extends GMLSyntaxNode {
     constructor(test, body) {
         super();
-        this.Test = test;
-        this.Body = body;
+        this.test = test;
+        this.body = body;
     }
 }
 
 export class ForStatement extends GMLSyntaxNode {
     constructor(init, test, update, body) {
         super();
-        this.Init = init;
-        this.Test = test;
-        this.Update = update;
-        this.Body = body;
+        this.init = init;
+        this.test = test;
+        this.update = update;
+        this.body = body;
     }
 }
 
 export class RepeatStatement extends GMLSyntaxNode {
     constructor(test, body) {
         super();
-        this.Test = test;
-        this.Body = body;
+        this.test = test;
+        this.body = body;
     }
 }
 
 export class WithStatement extends GMLSyntaxNode {
     constructor(object, body) {
         super();
-        this.Object = object;
-        this.Body = body;
+        this.object = object;
+        this.body = body;
     }
 }
 
 export class SwitchStatement extends GMLSyntaxNode {
     constructor(discriminant, cases) {
         super();
-        this.Discriminant = discriminant;
-        this.Cases = cases;
+        this.discriminant = discriminant;
+        this.cases = cases;
     }
 }
 
 export class SwitchCase extends GMLSyntaxNode {
     constructor(test, body) {
         super();
-        this.Test = test;
-        this.Body = body;
+        this.test = test;
+        this.body = body;
     }
 }
 
@@ -128,66 +124,65 @@ export class ExitStatement extends GMLSyntaxNode {
 }
 
 export class VariableDeclaration extends GMLSyntaxNode {
-    constructor(modifier, name, initializer) {
+    constructor(name, initializer) {
         super();
-        this.Modifier = modifier;
-        this.Name = name;
-        this.Initializer = initializer;
+        this.name = name;
+        this.initializer = initializer;
     }
 }
 
 export class VariableDeclarationList extends GMLSyntaxNode {
     constructor(modifier, declarations) {
         super();
-        this.Modifier = modifier;
-        this.Declarations = declarations;
+        this.modifier = modifier;
+        this.declarations = declarations;
     }
 }
 
 export class AssignmentExpression extends GMLSyntaxNode {
     constructor(operator, left, right) {
         super();
-        this.Operator = operator;
-        this.Left = left;
-        this.Right = right;
+        this.operator = operator;
+        this.left = left;
+        this.right = right;
     }
 }
 
 export class CallExpression extends GMLSyntaxNode {
     constructor(object, args) {
         super();
-        this.Object = object;
-        this.Arguments = args;
+        this.object = object;
+        this.args = args;
     }
 }
 
 export class MemberIndexExpression extends GMLSyntaxNode {
     constructor(object, property, accessor) {
         super();
-        this.Object = object;
-        this.Property = property;
-        this.Accessor = accessor;
+        this.object = object;
+        this.property = property;
+        this.accessor = accessor;
     }
 }
 
 export class MemberDotExpression extends GMLSyntaxNode {
     constructor(object, property) {
         super();
-        this.Object = object;
-        this.Property = property;
+        this.object = object;
+        this.property = property;
     }
 }
 
 export class Literal extends GMLSyntaxNode {
     constructor(text) {
         super();
-        this.Text = text;
+        this.text = text;
     }
 }
 
 export class Identifier extends GMLSyntaxNode {
     constructor(name) {
         super();
-        this.Name = name;
+        this.name = name;
     }
 }  
