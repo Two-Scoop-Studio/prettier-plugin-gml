@@ -98,8 +98,9 @@ export function print(path, options, print) {
 
   const node = path.getValue();
 
+  // Handle arrays of nodes
   if (Array.isArray(node)) {
-    return node.map((n, i) => path.call(print, i)).join("\n");
+    return node.map((_, i) => path.call(print, i)).join("\n");
   }
 
   if (!node) {
@@ -223,8 +224,7 @@ export function print(path, options, print) {
       const flattenedContents = node.contents.flat(Infinity);
       const nonNullContents = flattenedContents.filter(x => x !== null && x !== undefined); // Filter out null values
       result = nonNullContents.map((n, index) => {
-        const printed = path.call(print, "contents", index);
-        return printed;
+        return path.call(print, "contents", index);
       }).join('\n');
       break;
     default:

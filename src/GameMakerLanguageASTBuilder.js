@@ -90,7 +90,8 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
         }
     
         return new VariableDeclarationList(this.getVarModifier(varModifier), declarations);
-    }    
+    }
+    
     
     getVarModifier(modifierText) {
         if(modifierText === null) return null;
@@ -318,7 +319,7 @@ export default class GameMakerLanguageASTBuilder extends GameMakerLanguageParser
             parts.push(this.visit(expression));
         }
         return new NodeList(parts);
-    }
+    }    
     
     visitParenthesizedExpression(context) {
         let content = context.expression();

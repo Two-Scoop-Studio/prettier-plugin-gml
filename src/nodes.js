@@ -27,7 +27,7 @@ export class EmptyNode extends GMLSyntaxNode {
 export class NodeList extends GMLSyntaxNode {
     constructor(contents) {
         super();
-        this.contents = contents;
+        this.contents = Array.isArray(contents) ? contents : [contents];
     }
 }
 
@@ -135,7 +135,7 @@ export class VariableDeclarationList extends GMLSyntaxNode {
     constructor(modifier, declarations) {
         super();
         this.modifier = modifier;
-        this.declarations = declarations;
+        this.declarations = Array.isArray(declarations) ? declarations : [declarations];
     }
 }
 
