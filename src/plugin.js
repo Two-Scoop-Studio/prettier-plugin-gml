@@ -6,6 +6,9 @@ import GameMakerLanguageParser from './GameMakerLanguageParser.js';
 import GameMakerLanguageASTBuilder from './GameMakerLanguageASTBuilder.js';
 import { Identifier, Literal, VariableDeclaration } from './nodes.js';
 
+// const OPEN_PAREN = GameMakerLanguageLexer.VOCABULARY.getLiteralName(GameMakerLanguageLexer.OPEN_PAREN);
+// const CLOSE_PAREN = GameMakerLanguageLexer.VOCABULARY.getLiteralName(GameMakerLanguageLexer.CLOSE_PAREN);
+
 export function locStart(node) {
   return node.start;
 }
@@ -100,8 +103,24 @@ export function print(path, options, print) {
 
   // Handle arrays of nodes
   if (Array.isArray(node)) {
-    return node.map((_, i) => path.call(print, i)).join("\n");
-  }
+    const arrayPrintResults = node.map((n, i) => {
+      if (n === undefined) {
+        console.error(`Node at index ${i} is undefined`);
+        return 'UNDEFINED_NODE';
+      }
+      
+      const printResult = path.call(print, i);
+      if (printResult === undefined) {
+        console.error(`Print result for node at index ${i} is undefined`, n);
+        return 'UNDEFINED_PRINT_RESULT';
+      }
+      return printResult;
+    });
+  
+    console.log(arrayPrintResults);  // Debugging line
+  
+    return arrayPrintResults.join("\n");
+  }  
 
   if (!node) {
     throw new Error("No node provided!");
@@ -136,8 +155,11 @@ export function print(path, options, print) {
       }
       result = `${name}${initializer}`;
       console.log(`Print result for node of type VariableDeclaration: ${result}`);
-      break;      
+      break;
     case 'VariableDeclarationList':
+      if (node.declarations === undefined) {
+        throw new Error("node.declarations is undefined for VariableDeclarationList node");
+      }
       const declarationsPrinted = node.declarations.map((_, i) =>
         path.call((childPath) => {
           const printed = print(childPath);
@@ -146,7 +168,7 @@ export function print(path, options, print) {
       );
       result = `${node.modifier} ${declarationsPrinted.join(', ')};`;
       console.log(`Print result for node of type VariableDeclarationList: ${result}`);
-      break;       
+      break;
     case 'Block':
       result = `{ ${path.map(print, "body").join('; ')} }`;
       break;
@@ -175,11 +197,11 @@ export function print(path, options, print) {
       result = `switch (${path.call(print, "discriminant")}) { ${path.map(print, "cases").join(' ')} }`;
       break;
     case 'FunctionDeclaration':
-        result = `function ${path.call(print, "name")}(${path.map(print, "params").join(', ')}) ${path.call(print, "body")}`;
-        break;
+      result = `function ${path.call(print, "name")}(${path.map(print, "params").join(', ')}) ${path.call(print, "body")}`;
+      break;
     case 'Statement':
-        result = `${path.call(print, "expression")};`;
-        break;
+      result = `${path.call(print, "expression")};`;
+      break;
     case 'SwitchCase':
       result = `case ${path.call(print, "test")}: ${path.map(print, "body").join(' ')}`;
       break;
@@ -197,12 +219,13 @@ export function print(path, options, print) {
       break;
     case 'CallExpression':
       const objectParts = path.map(print, "object").join('.');
-      const args = node.args && node.args.contents ? path.map(print, "args.contents").flat().join(', ') : '';
+      console.log('CallExpression args content:', node.args.contents);
       if (!node.args || !node.args.contents) {
         throw new Error(`Node of type 'CallExpression' is missing 'args' or 'contents' property: ${JSON.stringify(node)}`);
       }
-      result = `${objectParts}(${args})`;
-      break;      
+      const argsResult = path.call(print, "args");
+      result = `${objectParts}(${argsResult})`;
+      break;
     case 'MemberIndexExpression':
       result = `${path.call(print, "object")}[${path.call(print, "property")}]`;
       break;
@@ -219,14 +242,23 @@ export function print(path, options, print) {
       result = '';
       break;
     case 'NodeList':
-      console.log(`Printing NodeList of size ${node.contents.length}}`);
-      // Flatten the deeply nested contents array
-      const flattenedContents = node.contents.flat(Infinity);
-      const nonNullContents = flattenedContents.filter(x => x !== null && x !== undefined); // Filter out null values
-      result = nonNullContents.map((n, index) => {
-        return path.call(print, "contents", index);
-      }).join('\n');
-      break;
+      // Check if node.contents is defined before trying to access its length
+      if(node.contents){
+        console.log(`Printing NodeList of size ${node.contents.length}}`);
+    
+        // Flatten the deeply nested contents array
+        const flattenedContents = node.contents.flat(Infinity);
+    
+        const nonNullContents = flattenedContents.filter(x => x !== null && x !== undefined); // Filter out null values
+        result = nonNullContents.map((n, index) => {
+          console.log(`Node type: ${n.type}`);
+          // return print(n, options, print);
+          return path.call(print, "contents", index);
+        }).join('\n');
+      } else {
+        console.error("Node.contents is undefined for NodeList node");
+      }
+      break;      
     default:
       throw new Error(`Unknown node type '${node.type}' for node: ${JSON.stringify(node)}`);
   }
