@@ -1,3 +1,5 @@
 node_modules
 project_structure.txt
 .antlr
+*.interp
+*.tokens

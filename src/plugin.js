@@ -6,8 +6,11 @@ import GameMakerLanguageParser from './GameMakerLanguageParser.js';
 import GameMakerLanguageASTBuilder from './GameMakerLanguageASTBuilder.js';
 import { Identifier, Literal, VariableDeclaration } from './nodes.js';
 
-// const OPEN_PAREN = GameMakerLanguageLexer.VOCABULARY.getLiteralName(GameMakerLanguageLexer.OPEN_PAREN);
-// const CLOSE_PAREN = GameMakerLanguageLexer.VOCABULARY.getLiteralName(GameMakerLanguageLexer.CLOSE_PAREN);
+const OPEN_PAREN = GameMakerLanguageLexer.literalNames[GameMakerLanguageLexer.OpenParen];
+const CLOSE_PAREN = GameMakerLanguageLexer.literalNames[GameMakerLanguageLexer.CloseParen];
+const OPEN_BRACKET = GameMakerLanguageLexer.literalNames[GameMakerLanguageLexer.OpenBracket];
+const CLOSE_BRACKET = GameMakerLanguageLexer.literalNames[GameMakerLanguageLexer.CloseBracket];
+
 
 export function locStart(node) {
   return node.start;
@@ -170,7 +173,7 @@ export function print(path, options, print) {
       console.log(`Print result for node of type VariableDeclarationList: ${result}`);
       break;
     case 'Block':
-      result = `{ ${path.map(print, "body").join('; ')} }`;
+      result = `${OPEN_BRACKET} ${path.map(print, "body").join('; ')} ${CLOSE_BRACKET}`;
       break;
     case 'IfStatement':
       if (!node.hasOwnProperty('alternate')) {
