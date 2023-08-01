@@ -23,18 +23,19 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		}
 	}
 
-	visitStructDeclaration(context) {
+	#visitFunctionOrStructDeclaration(context) {
 		const functionName = this.visit(context.identifier());
-		const parameters = context.parameterList() !== null ? this.visit(context.parameterList()) : null;
+		const parameters = this.visit(context?.parameterList());
 		const block = this.visit(context.block());
 		return doc.concat(functionName, parameters, block);
-	}
-
+	}	
+	
 	visitFunctionDeclaration(context) {
-		const functionName = context.identifier() !== null ? this.visit(context.identifier()) : null;
-		const parameters = context.parameterList() !== null ? this.visit(context.parameterList()) : null;
-		const block = this.visit(context.block());
-		return doc.concat(functionName, parameters, block);
+		return this.#visitFunctionOrStructDeclaration(context);
+	}
+	
+	visitStructDeclaration(context) {
+		return this.#visitFunctionOrStructDeclaration(context);
 	}
 
 	visitProgram(context) {
@@ -49,21 +50,20 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		const statements = context.statement();
 		const parts = [];
 		for (let i = 0; i < statements.length; i++) {
-			let statement = this.visit(statements[i]);
-			if (statement === null) {
-				continue;
-			}
-			parts.push(statement);
-			parts.push(this.printTrailingComments(statements[i]));
-			if (i !== statements.length - 1) {
-				parts.push(doc.hardLine);
-				if (this.isNextLineBlank(statements[i])) {
+			const statement = this.visit(statements[i]);
+			if (statement !== null) {
+				parts.push(statement);
+				parts.push(this.printTrailingComments(statements[i]));
+				if (i !== statements.length - 1) {
 					parts.push(doc.hardLine);
+					if (this.isNextLineBlank(statements[i])) {
+						parts.push(doc.hardLine);
+					}
 				}
 			}
 		}
 		return doc.concat(parts);
-	}
+	}	
 
 	visitStatement(context) {
 		let parts = [];
