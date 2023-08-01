@@ -1,4 +1,14 @@
-export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
+import { default as Lexer } from './GameMakerLanguageLexer.js';
+import {default as Parser} from './GameMakerLanguageParser.js';
+import GameMakerLanguageParserVisitor from './GameMakerLanguageParserVisitor.js';
+import { MULTI_LINE_COMMENT, SINGLE_LINE_COMMENT, INLINE_COMMENT, LINE_CONTINUATION, LIST_ACCESSOR, MAP_ACCESSOR, GRID_ACCESSOR, ARRAY_ACCESSOR, STRUCT_ACCESSOR, OPEN_PAREN, CLOSE_PAREN, OPEN_BRACE, TEMPLATE_STRING_END_EXPRESSION, CLOSE_BRACE, BEGIN, END, SEMI_COLON, COMMA, ASSIGN, COLON, DOT, PLUS_PLUS, MINUS_MINUS, PLUS, MINUS, BIT_NOT, NOT, MULTIPLY, DIVIDE, INTEGER_DIVIDE, MODULO, POWER, QUESTION_MARK, NULL_COALESCE, NULL_COALESCING_ASSIGN, RIGHT_SHIFT_ARITHMETIC, LEFT_SHIFT_ARITHMETIC, LESS_THAN, MORE_THAN, LESS_THAN_EQUALS, GREATER_THAN_EQUALS, EQUALS_, NOT_EQUALS, BIT_AND, BIT_XOR, BIT_OR, AND, OR, XOR, MULTIPLY_ASSIGN, DIVIDE_ASSIGN, PLUS_ASSIGN, MINUS_ASSIGN, MODULUS_ASSIGN, LEFT_SHIFT_ARITHMETIC_ASSIGN, RIGHT_SHIFT_ARITHMETIC_ASSIGN, BIT_AND_ASSIGN, BIT_XOR_ASSIGN, BIT_OR_ASSIGN, NUMBER_SIGN, DOLLAR_SIGN, AT_SIGN, BOOLEAN_LITERAL, INTEGER_LITERAL, DECIMAL_LITERAL, BINARY_LITERAL, HEX_INTEGER_LITERAL, UNDEFINED, NO_ONE, BREAK, EXIT, DO, CASE, ELSE, NEW, VAR, GLOBAL_VAR, CATCH, FINALLY, RETURN, CONTINUE, FOR, SWITCH, WHILE, UNTIL, REPEAT, FUNCTION, WITH, DEFAULT, IF, THROW, DELETE, TRY, ENUM, CONSTRUCTOR, STATIC, SELF, OTHER, ALL, MACRO, ESCAPED_NEW_LINE, DEFINE, REGION, END_REGION, IDENTIFIER, STRING_LITERAL, TEMPLATE_STRING_START, VERBATIM_STRING_LITERAL, WHITE_SPACES, LINE_TERMINATOR, UNEXPECTED_CHARACTER, REGION_CHARACTERS, REGION_EOL, TEMPLATE_STRING_END, TEMPLATE_STRING_START_EXPRESSION, TEMPLATE_STRING_TEXT } from './lexerNames.js';
+
+const CommentType = {
+	SingleLine: 'SingleLine',
+	MultiLine: 'MultiLine'
+};
+
+export class VisitorAndPrinter extends GameMakerLanguageParserVisitor {
 	_tokens;
 	_printedCommentGroups = new Set();
 
@@ -14,170 +24,177 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		if (!this.canAttachComments(tree)) {
 			return super.visit(tree);
 		}
+
 		const trailingComments = this.printTrailingComments(tree);
 		const leadingComments = this.printLeadingComments(tree);
-		if (trailingComments !== null || leadingComments !== null) {
-			return doc.concat(leadingComments, super.visit(tree), trailingComments);
-		} else {
-			return super.visit(tree);
-		}
+
+		return trailingComments || leadingComments
+			? doc.concat(leadingComments, super.visit(tree), trailingComments)
+			: super.visit(tree);
 	}
 
-	#visitFunctionOrStructDeclaration(context) {
-		const functionName = this.visit(context.identifier());
-		const parameters = this.visit(context?.parameterList());
-		const block = this.visit(context.block());
+	visitDeclaration(context, visitIdentifier, visitParameters, visitBlock) {
+		const functionName = context.identifier() ? visitIdentifier(context.identifier()) : null;
+		const parameters = context.parameterList() ? visitParameters(context.parameterList()) : null;
+		const block = visitBlock(context.block());
+
 		return doc.concat(functionName, parameters, block);
-	}	
-	
-	visitFunctionDeclaration(context) {
-		return this.#visitFunctionOrStructDeclaration(context);
 	}
-	
+
 	visitStructDeclaration(context) {
-		return this.#visitFunctionOrStructDeclaration(context);
+		return this.visitDeclaration(context, this.visit, this.visit, this.visit);
+	}
+
+	visitFunctionDeclaration(context) {
+		return this.visitDeclaration(context, this.visit, this.visit, this.visit);
 	}
 
 	visitProgram(context) {
-		if (context.statementList() !== null) {
-			return this.visit(context.statementList());
-		} else {
-			return null;
-		}
+		return context.statementList() ? this.visit(context.statementList()) : null;
 	}
 
 	visitStatementList(context) {
 		const statements = context.statement();
 		const parts = [];
+
 		for (let i = 0; i < statements.length; i++) {
 			const statement = this.visit(statements[i]);
-			if (statement !== null) {
+
+			if (statement) {
 				parts.push(statement);
 				parts.push(this.printTrailingComments(statements[i]));
+
 				if (i !== statements.length - 1) {
 					parts.push(doc.hardLine);
-					if (this.isNextLineBlank(statements[i])) {
-						parts.push(doc.hardLine);
-					}
+					this.isNextLineBlank(statements[i]) && parts.push(doc.hardLine);
 				}
 			}
 		}
+
 		return doc.concat(parts);
-	}	
+	}
 
 	visitStatement(context) {
-		let parts = [];
-		let needsSemicolon = false;
-		if (context.block() !== null) {
-			parts.push(this.visit(context.block()));
-		}
+		const parts = [];
+		context.block() && parts.push(this.visit(context.block()));
 
-		if (needsSemicolon) {
-			parts.push(";");
-		}
 		return doc.concat(parts);
 	}
 
 	visitBlock(context) {
-		let body;
-		if (context.statementList() !== null) {
-			body = this.visit(context.statementList());
-		} else {
-			body = null;
-		}
+		const body = context.statementList() ? this.visit(context.statementList()) : null;
+
 		return doc.concat("{", doc.indent(doc.hardLine, body), doc.hardLine, "}");
 	}
 
 	canAttachComments(context) {
-		return !(context instanceof GameMakerLanguageParser.ProgramContext || context instanceof GameMakerLanguageParser.StatementListContext);
+		return !(
+			context instanceof Parser.ProgramContext ||
+			context instanceof Parser.StatementListContext
+		);
 	}
 
 	visitIfStatement(context) {
-		let parts = [this.printSingleClauseStatement("if", context.expression(), context.statement()[0])];
+		const parts = [this.printSingleClauseStatement("if", context.expression(), context.statement()[0])];
+
 		if (context.statement().length > 1) {
 			parts.push(" else ");
-			let elseStatement = context.statement()[1];
-			if (elseStatement.children[0] instanceof GameMakerLanguageParser.IfStatementContext) {
-				parts.push(this.visit(elseStatement));
-			} else {
-				parts.push(this.printStatementInBlock(elseStatement));
-			}
+			const elseStatement = context.statement()[1];
+
+			elseStatement.children[0] instanceof Parser.IfStatementContext
+				? parts.push(this.visit(elseStatement))
+				: parts.push(this.printStatementInBlock(elseStatement));
 		}
+
 		return doc.concat(parts);
 	}
 
 	visitWithStatement(context) {
-		return this.printSingleClauseStatement("with", context.expression(), context.statement());
+		return this.printSingleClauseStatement(WITH, context.expression(), context.statement());
 	}
 
 	visitWhileStatement(context) {
-		return this.printSingleClauseStatement("while", context.expression(), context.statement());
+		return this.printSingleClauseStatement(WHILE, context.expression(), context.statement());
 	}
 
 	visitRepeatStatement(context) {
-		return this.printSingleClauseStatement("repeat", context.expression(), context.statement());
+		return this.printSingleClauseStatement(REPEAT, context.expression(), context.statement());
 	}
 
 	visitAssignmentExpression(context) {
 		let operator = context.assignmentOperator().getText();
-		if (operator === ":=") {
-			operator = "=";
-		}
+		operator = operator === ":=" ? ASSIGN : operator;  // := assignment operator is deprecated as of GML 2.3.0
+
 		let expressionContext = context.expressionOrFunction();
-		if (context.expressionOrFunction().expression() !== null) {
-			expressionContext = context.expressionOrFunction().expression();
-			while (expressionContext instanceof GameMakerLanguageParser.ParenthesizedExpressionContext) {
+
+		if (expressionContext?.expression()) {
+			for (
+				expressionContext = expressionContext.expression();
+				expressionContext instanceof Parser.ParenthesizedExpressionContext;
+			) {
 				expressionContext = expressionContext.expression();
 			}
 		}
-		let shouldIndent = false;
+
 		return doc.group(
 			doc.group(this.visit(context.lValueExpression())),
 			" ",
 			operator,
 			" ",
-			shouldIndent
-				? doc.group(doc.indent(this.visit(expressionContext)))
-				: doc.group(this.visit(expressionContext))
+			doc.group(this.visit(expressionContext))
 		);
 	}
 
 	printInnerComments(context) {
-		let tokens = this._tokens.get(context.start.tokenIndex, context.stop.tokenIndex);
-		let parts = [];
+		const tokens = this._tokens.get(context.start.tokenIndex, context.stop.tokenIndex);
+		const parts = [];
 		let currentGroup = [];
 		let shouldBreak = false;
+
 		for (let i = 0; i < tokens.length; i++) {
-			if (tokens[i].type === GameMakerLanguageLexer.WhiteSpaces || tokens[i].type === GameMakerLanguageLexer.LineTerminator || tokens[i].type === GameMakerLanguageLexer.SingleLineComment || tokens[i].type === GameMakerLanguageLexer.MultiLineComment) {
-				if (tokens[i].type === GameMakerLanguageLexer.SingleLineComment) {
+			const tokenType = tokens[i].type;
+			const isCommentOrWhitespace =
+				tokenType === Lexer.WhiteSpaces ||
+				tokenType === Lexer.LineTerminator ||
+				tokenType === Lexer.SingleLineComment ||
+				tokenType === Lexer.MultiLineComment;
+
+			if (isCommentOrWhitespace) {
+				if (tokenType === Lexer.SingleLineComment) {
 					shouldBreak = true;
 				}
 				currentGroup.push(tokens[i]);
 			} else {
-				if (currentGroup.length > 0 && this._printedCommentGroups.add(currentGroup[0].tokenIndex)) {
+				if (currentGroup.length > 0) {
+					this._printedCommentGroups.add(currentGroup[0].tokenIndex);
 					parts.push(this.printCommentsAndWhitespace(currentGroup, false));
 				}
 				currentGroup = [];
 			}
 		}
-		if (parts.length === 0) {
-			return null;
-		}
-		return parts.join(" ");
+
+		return parts.length === 0 ? null : parts.join(" ");
 	}
 
 	printSingleClauseStatement(keyword, clause, body) {
-		while (clause instanceof GameMakerLanguageParser.ParenthesizedExpressionContext) {
+		while (clause instanceof Parser.ParenthesizedExpressionContext) {
 			clause = clause.expression();
 		}
-		return doc.concat(keyword, " (", doc.group(doc.indent(doc.softLine, this.visit(clause))), ") ", this.printStatementInBlock(body));
+
+		return doc.concat(
+			keyword,
+			` ${OPEN_PAREN}`,
+			doc.group(doc.indent(doc.softLine, this.visit(clause))),
+			`${CLOSE_PAREN} `,
+			this.printStatementInBlock(body)
+		);
 	}
 
 	printStatementInBlock(statementContext) {
-		if (statementContext instanceof GameMakerLanguageParser.StatementContext && statementContext.block() !== null) {
-			return this.visit(statementContext.block());
-		}
-		return doc.concat("{", doc.indent(doc.concat([doc.hardLine, this.visit(statementContext)])), doc.hardLine, "}");
+		return statementContext instanceof Parser.StatementContext &&
+			statementContext.block()
+			? this.visit(statementContext.block())
+			: doc.concat(OPEN_BRACE, doc.indent(doc.concat([doc.hardLine, this.visit(statementContext)])), doc.hardLine, CLOSE_BRACE);
 	}
 
 	printCommentsAndWhitespace(tokens, isTrailing, trim = true) {
@@ -185,16 +202,17 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		let firstCommentIndex = -1;
 		let lastCommentIndex = -1;
 		let consecutiveLineBreaks = 0;
-		if (tokens.length === 0) {
-			return null;
-		}
+
+		if (tokens.length === 0) return null;
+
 		for (let i = 0; i < tokens.length; i++) {
 			let type = tokens[i].type;
-			if (type === GameMakerLanguageLexer.WhiteSpaces) {
-				if (i < tokens.length - 1 && tokens[i + 1].type !== GameMakerLanguageLexer.LineTerminator) {
+
+			if (type === Lexer.WhiteSpaces) {
+				if (i < tokens.length - 1 && tokens[i + 1].type !== Lexer.LineTerminator) {
 					parts.push(" ");
 				}
-			} else if (type === GameMakerLanguageLexer.LineTerminator) {
+			} else if (type === Lexer.LineTerminator) {
 				if (consecutiveLineBreaks < 2 && tokens[i].text.includes("\r")) {
 					parts.push(doc.hardLine);
 					consecutiveLineBreaks++;
@@ -202,49 +220,38 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 			} else {
 				consecutiveLineBreaks = 0;
 			}
-			if (type === GameMakerLanguageLexer.SingleLineComment || type === GameMakerLanguageLexer.MultiLineComment) {
-				let commentType = type === GameMakerLanguageLexer.SingleLineComment ? CommentType.SingleLine : CommentType.MultiLine;
+
+			if (type === Lexer.SingleLineComment || type === Lexer.MultiLineComment) {
+				let commentType = type === Lexer.SingleLineComment ? CommentType.SingleLine : CommentType.MultiLine;
 				if (commentType === CommentType.SingleLine) {
-					if (isTrailing) {
-						parts.push(doc.trailingComment(tokens[i].text, commentType));
-					} else {
-						parts.push(doc.leadingComment(tokens[i].text, commentType));
-					}
+					isTrailing ? parts.push(doc.trailingComment(tokens[i].text, commentType)) : parts.push(doc.leadingComment(tokens[i].text, commentType));
 				} else {
 					parts.push(tokens[i].text);
 				}
-				if (firstCommentIndex === -1) {
-					firstCommentIndex = parts.length;
-				}
+				if (firstCommentIndex === -1) firstCommentIndex = parts.length;
 				lastCommentIndex = parts.length;
 			}
 		}
-		if (firstCommentIndex === -1) {
-			return null;
-		}
+
+		if (firstCommentIndex === -1) return null;
+
 		let trimmedParts = parts.slice(firstCommentIndex - 1, lastCommentIndex - firstCommentIndex + 1);
 		return doc.concat(trimmedParts);
 	}
 
 	isNextLineBlank(context) {
 		let hiddenTokens = this._tokens.getHiddenTokensToRight(context.stop.tokenIndex);
-		if (hiddenTokens === null) {
-			return false;
-		}
+		if (hiddenTokens === null) return false;
 		let lineCount = 0;
 		for (let i = 0; i < hiddenTokens.length; i++) {
-			if (lineCount === 1 && (hiddenTokens[i].type === GameMakerLanguageLexer.SingleLineComment || hiddenTokens[i].type === GameMakerLanguageLexer.MultiLineComment)) {
-				return false;
-			}
-			if (hiddenTokens[i].type === GameMakerLanguageLexer.LineTerminator && !hiddenTokens[i].text.includes("\r")) {
-				lineCount++;
-			}
+			if (lineCount === 1 && (hiddenTokens[i].type === Lexer.SingleLineComment || hiddenTokens[i].type === Lexer.MultiLineComment)) return false;
+			if (hiddenTokens[i].type !== Lexer.LineTerminator || hiddenTokens[i].text.includes("\r")) lineCount++;
 		}
 		return lineCount >= 2;
 	}
 
 	isSeparator(token) {
-		return token.type === GameMakerLanguageLexer.Comma || token.type === GameMakerLanguageLexer.SemiColon;
+		return token.type === Lexer.Comma || token.type === Lexer.SemiColon;
 	}
 
 	visitVariableDeclarationList(context) {
@@ -254,14 +261,14 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		for (let i = 0; i < variableDeclarations.length; i++) {
 			assignments.push(this.visit(variableDeclarations[i]));
 		}
-		let separator = doc.concat(",", doc.line);
+		let separator = doc.concat(COMMA, doc.line);
 		parts.push(doc.group(doc.indent(doc.join(separator, assignments))));
 		return doc.concat(parts);
 	}
 
 	visitVariableDeclaration(context) {
 		if (context.expressionOrFunction() !== null) {
-			let parts = [this.visit(context.identifier()), " = ", this.visit(context.expressionOrFunction())];
+			let parts = [this.visit(context.identifier()), ` ${ASSIGN} `, this.visit(context.expressionOrFunction())];
 			return doc.concat(parts);
 		} else {
 			return this.visit(context.identifier());
@@ -293,7 +300,7 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 				let trailingComments = this.printTrailingComments(expressions[i]);
 				parts.push(this.visit(expressions[i]));
 				if (i !== expressions.length - 1) {
-					parts.push(",");
+					parts.push(COMMA);
 					if (trailingComments !== null) {
 						parts.push(trailingComments);
 					}
@@ -305,11 +312,11 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 			let innerComments = this.printInnerComments(context);
 			if (innerComments !== null) {
 				let lineDoc = containsSingleLineComment ? doc.hardLine : doc.softLine;
-				return doc.group("(", doc.indent(lineDoc, innerComments), lineDoc, ")");
+				return doc.group(OPEN_PAREN, doc.indent(lineDoc, innerComments), lineDoc, CLOSE_PAREN);
 			}
 			return "()";
 		}
-		return doc.group("(", doc.indent(doc.softLine, doc.concat(parts)), doc.softLine, ")");
+		return doc.group(OPEN_PAREN, doc.indent(doc.softLine, doc.concat(parts)), doc.softLine, CLOSE_PAREN);
 	}
 
 	visitLValueExpression(t) {
@@ -320,17 +327,17 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		if (null !== c && c.length > 0) {
 			for (let d = 0; d < c.length; d++) {
 				let f = this.visit(c[d]);
-				n.push(f), h ? (c[d] instanceof GameMakerLanguageParser.CallLValueContext ? r.push(null) : c[d] instanceof GameMakerLanguageParser.MemberDotLValueContext ? d > 0 && c[d - 1] instanceof GameMakerLanguageParser.CallLValueContext ? r.push(doc.hardLine) : r.push(doc.softLine) : d !== 0 && r.push(doc.softLine), r.push(f)) : d < c.length - 1 && c[d] instanceof GameMakerLanguageParser.MemberDotLValueContext && c[d + 1] instanceof GameMakerLanguageParser.CallLValueContext ? (r.push(null), r.push(doc.hardLine), r.push(f), h = !0) : s.push(f);
+				n.push(f), h ? (c[d] instanceof Parser.CallLValueContext ? r.push(null) : c[d] instanceof Parser.MemberDotLValueContext ? d > 0 && c[d - 1] instanceof Parser.CallLValueContext ? r.push(doc.hardLine) : r.push(doc.softLine) : d !== 0 && r.push(doc.softLine), r.push(f)) : d < c.length - 1 && c[d] instanceof Parser.MemberDotLValueContext && c[d + 1] instanceof Parser.CallLValueContext ? (r.push(null), r.push(doc.hardLine), r.push(f), h = !0) : s.push(f);
 				u = c[c.length - 1];
 			}
 		}
 		if (null !== t.lValueFinalOperator()) {
 			let d = this.visit(t.lValueFinalOperator());
-			n.push(d), h ? (t.parent instanceof GameMakerLanguageParser.CallableExpressionContext || t.lValueFinalOperator() instanceof GameMakerLanguageParser.MemberDotLValueFinalContext && u instanceof GameMakerLanguageParser.CallLValueContext ? r.push(doc.hardLine) : r.push(doc.softLine), r.push(d)) : s.push(d);
+			n.push(d), h ? (t.parent instanceof Parser.CallableExpressionContext || t.lValueFinalOperator() instanceof Parser.MemberDotLValueFinalContext && u instanceof Parser.CallLValueContext ? r.push(doc.hardLine) : r.push(doc.softLine), r.push(d)) : s.push(d);
 		}
-		if (t.parent instanceof GameMakerLanguageParser.CallableExpressionContext) {
+		if (t.parent instanceof Parser.CallableExpressionContext) {
 			let d = t.parent;
-			for (; !(d instanceof GameMakerLanguageParser.CallStatementContext);) {
+			for (; !(d instanceof Parser.CallStatementContext);) {
 				if (null === d) throw Error("Parent context is unexpectedly null during traversal.");
 				d = d.parent;
 			}
@@ -348,11 +355,11 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 
 	visitMemberDotLValue(t) {
 		let e = this.printInnerComments(t);
-		return null !== e ? doc.concat(e, doc.hardLine, ".", this.visit(t.identifier())) : doc.concat(".", this.visit(t.identifier()));
+		return null !== e ? doc.concat(e, doc.hardLine, DOT, this.visit(t.identifier())) : doc.concat(DOT, this.visit(t.identifier()));
 	}
 
 	visitMemberDotLValueFinal(t) {
-		return doc.concat(".", this.visit(t.identifier()));
+		return doc.concat(DOT, this.visit(t.identifier()));
 	}
 
 	visitIdentifierLValue(t) {
@@ -384,7 +391,7 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 	}
 
 	visitParenthesizedExpression(t) {
-		return doc.group("(", doc.indent(doc.softLine, this.visit(t.expression())), doc.softLine, ")");
+		return doc.group(OPEN_PAREN, doc.indent(doc.softLine, this.visit(t.expression())), doc.softLine, CLOSE_PAREN);
 	}
 
 	visitLiteralExpression(t) {
@@ -445,7 +452,7 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 	}
 
 	printBinaryExpression(t) {
-		let e = [], i = t.getRuleContexts(GameMakerLanguageParser.ExpressionContext), n = i[0], s = i[1], r = t.children[1].getText();
+		let e = [], i = t.getRuleContexts(Parser.ExpressionContext), n = i[0], s = i[1], r = t.children[1].getText();
 		switch (r) {
 			case "and":
 				r = "&&";
@@ -467,9 +474,9 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 				break;
 		}
 		console.log(`Node is ${t.constructor.name}, Precedence is ${this.getPrecedence(t)}`), console.log(`Parent node is ${t.parent.constructor.name}, Precedence is ${this.getPrecedence(t.parent)}`);
-		let o = t.constructor.name !== t.parent.constructor.name && this.getPrecedence(t) !== this.getPrecedence(t.parent) && n.constructor.name !== t.constructor.name && s.constructor.name !== t.constructor.name, l = t instanceof GameMakerLanguageParser.CoalesceExpressionContext;
+		let o = t.constructor.name !== t.parent.constructor.name && this.getPrecedence(t) !== this.getPrecedence(t.parent) && n.constructor.name !== t.constructor.name && s.constructor.name !== t.constructor.name, l = t instanceof Parser.CoalesceExpressionContext;
 		if (l) e.push(this.visit(n)), e.push(doc.line), e.push(r), e.push(" ");
-		let a = l ? s : n, h = t instanceof GameMakerLanguageParser.EqualityExpressionContext;
+		let a = l ? s : n, h = t instanceof Parser.EqualityExpressionContext;
 		if (this.isBinaryExpression(a) && this.getPrecedence(t) === this.getPrecedence(a)) e = e.concat(this.printBinaryExpression(a)); else e.push(this.visit(a));
 		if (l) return o ? [e[0], doc.group(e.slice(1))] : e;
 		let u = doc.concat(h ? " " : doc.line, r, " ", this.visit(s));
@@ -477,7 +484,7 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 	}
 
 	isBinaryExpression(node) {
-		return node instanceof GameMakerLanguageParser.ExpressionContext && !(node instanceof GameMakerLanguageParser.RelationalExpressionContext) && node.getRuleContexts(GameMakerLanguageParser.ExpressionContext).length == 2;
+		return node instanceof Parser.ExpressionContext && !(node instanceof Parser.RelationalExpressionContext) && node.getRuleContexts(Parser.ExpressionContext).length == 2;
 	}
 
 	printLeadingComments(context) {
@@ -486,9 +493,9 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		if (hiddenTokens != null) {
 			for (let i = 0; i < hiddenTokens.length; i++) {
 				let type = hiddenTokens[i].type;
-				if (type == GameMakerLanguageLexer.WhiteSpaces) {
+				if (type == Lexer.WhiteSpaces) {
 					continue;
-				} else if (type == GameMakerLanguageLexer.SingleLineComment) {
+				} else if (type == Lexer.SingleLineComment) {
 					leadingSingleLineComment = true;
 					break;
 				}
@@ -523,11 +530,11 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 		if (hiddenTokens != null) {
 			for (let i = 0; i < hiddenTokens.length; i++) {
 				let type = hiddenTokens[i].type;
-				if (type == GameMakerLanguageLexer.WhiteSpaces) {
+				if (type == Lexer.WhiteSpaces) {
 					continue;
-				} else if (type == GameMakerLanguageLexer.LineTerminator) {
+				} else if (type == Lexer.LineTerminator) {
 					return null;
-				} else if (leadingSeparator && type == GameMakerLanguageLexer.MultiLineComment) {
+				} else if (leadingSeparator && type == Lexer.MultiLineComment) {
 					return null;
 				} else {
 					break;
@@ -543,18 +550,21 @@ export class VisitorAndPrinter extends GameMakerLanguageParserBaseVisitor {
 	}
 
 	getPrecedence(t) {
-		return t instanceof GameMakerLanguageParser.BitXorExpressionContext ? 1 :
-			t instanceof GameMakerLanguageParser.BitOrExpressionContext ? 2 :
-			t instanceof GameMakerLanguageParser.BitAndExpressionContext ? 3 :
-			t instanceof GameMakerLanguageParser.RelationalExpressionContext ? 4 :
-			t instanceof GameMakerLanguageParser.EqualityExpressionContext ? 5 :
-			t instanceof GameMakerLanguageParser.LogicalXorExpressionContext ? 6 :
-			t instanceof GameMakerLanguageParser.LogicalAndExpressionContext ? 7 :
-			t instanceof GameMakerLanguageParser.LogicalOrExpressionContext ? 8 :
-			t instanceof GameMakerLanguageParser.CoalesceExpressionContext ? 9 :
-			t instanceof GameMakerLanguageParser.BitShiftExpressionContext ? 10 :
-			t instanceof GameMakerLanguageParser.AdditiveExpressionContext ? 11 :
-			t instanceof GameMakerLanguageParser.MultiplicativeExpressionContext ? 12 : -1;
-	}
+		const precedenceMap = {
+			[Parser.BitXorExpressionContext.name]: 1,
+			[Parser.BitOrExpressionContext.name]: 2,
+			[Parser.BitAndExpressionContext.name]: 3,
+			[Parser.RelationalExpressionContext.name]: 4,
+			[Parser.EqualityExpressionContext.name]: 5,
+			[Parser.LogicalXorExpressionContext.name]: 6,
+			[Parser.LogicalAndExpressionContext.name]: 7,
+			[Parser.LogicalOrExpressionContext.name]: 8,
+			[Parser.CoalesceExpressionContext.name]: 9,
+			[Parser.BitShiftExpressionContext.name]: 10,
+			[Parser.AdditiveExpressionContext.name]: 11,
+			[Parser.MultiplicativeExpressionContext.name]: 12
+		};
+		return precedenceMap[t.constructor.name] || -1;
+	}	
 
 }
